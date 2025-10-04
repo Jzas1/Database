@@ -122,6 +122,8 @@ def build_compile_spend(df_compile: pd.DataFrame) -> Dict[str, pd.DataFrame]:
             mk["Impressions"] = 0
             impr_name = "Impressions"
         mk.rename(columns={market_col: "Market", cost_col: "Cost", impr_name: "Impressions"}, inplace=True)
+        # Normalize Market: "National Cable", "National Network" → "National"
+        mk["Market"] = mk["Market"].astype(str).str.strip().str.replace(r'(?i)^national\s*(cable|network)\s*$', 'National', regex=True)
         market_spend = mk.groupby("Market", as_index=False).agg(Cost=("Cost", "sum"), Impressions=("Impressions", "sum"))
     else:
         market_spend = pd.DataFrame(columns=["Market", "Cost", "Impressions"])
@@ -208,6 +210,8 @@ def build_compile_spend(df_compile: pd.DataFrame) -> Dict[str, pd.DataFrame]:
             mk2 = df[[market_col, cost_col, "_Week Of (Mon)"]].copy()
             mk2.rename(columns={market_col: "Market", cost_col: "Cost"}, inplace=True)
             mk2["Cost"] = coerce_numeric(mk2["Cost"]).fillna(0)
+            # Normalize Market: "National Cable", "National Network" → "National"
+            mk2["Market"] = mk2["Market"].astype(str).str.strip().str.replace(r'(?i)^national\s*(cable|network)\s*$', 'National', regex=True)
             if impr_col in df.columns:
                 mk2["Impressions"] = coerce_numeric(df[impr_col]).fillna(0)
             else:

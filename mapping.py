@@ -86,9 +86,11 @@ def map_actions(df_actions_raw: pd.DataFrame) -> pd.DataFrame:
     if creative_col:
         out["Creative"] = df[creative_col]
 
-    market_col = first_col_by_keys(df, ["t_adspots_market", "market", "t adspots market", "tadspotsmarket"])
+    market_col = first_col_by_keys(df, ["t_adspots_market", "market", "t adspots market", "tadspotsmarket", "region"])
     if market_col:
-        out["Market"] = pd.Series(df[market_col], dtype="string").str.strip()
+        market_raw = pd.Series(df[market_col], dtype="string").str.strip()
+        # Normalize: "national" → "National", "National Cable" → "National", "National Network" → "National"
+        out["Market"] = market_raw.str.replace(r'(?i)^national\s*(cable|network)?$', 'National', regex=True)
 
     out["Station"] = norm_station_series(out["Station"]).fillna("UNKNOWN")
 
@@ -124,9 +126,11 @@ def map_response(df_response_raw: pd.DataFrame) -> pd.DataFrame:
     if creative_col:
         out["Creative"] = df[creative_col]
 
-    market_col = next((cols[k] for k in ["t_adspots_market", "tadspotsmarket", "market"] if k in cols), None)
+    market_col = next((cols[k] for k in ["t_adspots_market", "tadspotsmarket", "market", "region"] if k in cols), None)
     if market_col:
-        out["Market"] = pd.Series(df[market_col], dtype="string").str.strip()
+        market_raw = pd.Series(df[market_col], dtype="string").str.strip()
+        # Normalize: "national" → "National", "National Cable" → "National", "National Network" → "National"
+        out["Market"] = market_raw.str.replace(r'(?i)^national\s*(cable|network)?$', 'National', regex=True)
 
     out["Station"] = norm_station_series(out["Station"]).fillna("UNKNOWN")
     return out
