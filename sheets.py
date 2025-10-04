@@ -60,7 +60,7 @@ def _ensure_header_and_extend(ws, desired_header: List[str]) -> List[str]:
 
 
 def _delete_rows_matching_weeks(ws, header: List[str], weeks: Set[str]) -> None:
-    """Delete rows matching specific week values."""
+    """Delete rows matching specific week values using batch operations."""
     if not weeks or not header:
         return
     try:
@@ -73,9 +73,28 @@ def _delete_rows_matching_weeks(ws, header: List[str], weeks: Set[str]) -> None:
     for row_num, wk in enumerate(col_vals[1:], start=2):  # start after header
         if wk in weeks:
             to_del.append(row_num)
-    # delete bottom-up to keep indices stable
-    for r in reversed(to_del):
-        ws.delete_rows(r)
+
+    if not to_del:
+        return
+
+    # Batch delete using range deletion (much faster, fewer API calls)
+    # Group consecutive rows into ranges
+    ranges = []
+    start = to_del[0]
+    end = to_del[0]
+
+    for row in to_del[1:]:
+        if row == end + 1:
+            end = row
+        else:
+            ranges.append((start, end))
+            start = row
+            end = row
+    ranges.append((start, end))
+
+    # Delete ranges bottom-up to keep indices stable
+    for start, end in reversed(ranges):
+        ws.delete_rows(start, end)
 
 
 def _df_to_rows(df: pd.DataFrame, header: List[str]) -> List[List]:
@@ -95,13 +114,18 @@ def _df_to_rows(df: pd.DataFrame, header: List[str]) -> List[List]:
         if pd.api.types.is_categorical_dtype(out[col].dtype):
             out[col] = out[col].astype("string")
 
-    # 2) Make everything object so we can mix numbers/strings cleanly
+    # 2) Convert datetime/timestamp columns to strings
+    for col in out.columns:
+        if pd.api.types.is_datetime64_any_dtype(out[col]):
+            out[col] = out[col].astype(str)
+
+    # 3) Make everything object so we can mix numbers/strings cleanly
     out = out.astype(object)
 
-    # 3) Replace missing with empty string
+    # 4) Replace missing with empty string
     out = out.where(pd.notna(out), "")
 
-    # 4) Rows for Sheets
+    # 5) Rows for Sheets
     return out.values.tolist()
 
 
@@ -316,4 +340,4 @@ def maybe_push_to_gsheets(perf_tabs: Dict[str, pd.DataFrame],
         return
 
     _push_frames_to_sheet(frames, sheet_id, mode)
-    print("\n[Sheets] ✅ Push complete.\n")
+    print("\n[Sheets] SUCCESS - Push complete.\n")

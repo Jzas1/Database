@@ -4,7 +4,7 @@
 from pathlib import Path
 
 # File paths
-FOLDER = Path(r"C:\Users\joe\Desktop\Auto")
+FOLDER = Path(__file__).parent  # Use the script's directory
 
 # File patterns
 PATTERNS = {

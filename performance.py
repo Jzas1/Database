@@ -14,23 +14,45 @@ from normalization import (
 from spend import build_compile_spend
 
 
+def hour_to_daypart(hour: int) -> str:
+    """Map hour (0-23) to daypart."""
+    if hour in [0, 1]:
+        return "Late Fringe"
+    elif hour in [2, 3, 4, 5]:
+        return "Overnight"
+    elif hour in [6, 7, 8]:
+        return "Early Morning"
+    elif hour in [9, 10, 11, 12, 13, 14, 15, 16, 17]:
+        return "Daytime"
+    elif hour in [18, 19, 20, 21, 22, 23]:
+        return "Prime"
+    else:
+        return "Unknown"
+
+
 def _reorder_metrics(df: pd.DataFrame, id_cols: List[str]) -> pd.DataFrame:
     """
     Enforce consistent metric column ordering:
-    Cost, Responses, Cost per Response, <each action + Cost per action> (alphabetical),
-    Actions_Total, Cost per Actions_Total, Impressions
+    Client, <id_cols>, Cost, Responses, Cost per Response, <each action + Cost per action> (alphabetical),
+    Actions_Total, Cost per Actions_Total, Impressions, Week Of (Mon)
     """
     cols = list(df.columns)
     base = ["Cost", "Responses", "Cost per Response"]
     tail = ["Actions_Total", "Cost per Actions_Total", "Impressions"]
 
-    fixed_names = set(id_cols + base + tail)
+    # Client and Week should be first and last respectively
+    fixed_names = set(["Client", "Week Of (Mon)"] + id_cols + base + tail)
     action_cols = [c for c in cols if c not in fixed_names and not str(c).startswith("Cost per ")]
     action_cols = sorted(action_cols, key=lambda x: str(x).lower())
 
     ordered: List[str] = []
+
+    # Client always first if present
+    if "Client" in cols:
+        ordered.append("Client")
+
     for c in id_cols:
-        if c in cols:
+        if c in cols and c not in ["Client", "Week Of (Mon)"]:
             ordered.append(c)
     for c in base:
         if c in cols:
@@ -44,6 +66,11 @@ def _reorder_metrics(df: pd.DataFrame, id_cols: List[str]) -> pd.DataFrame:
     for c in tail:
         if c in cols:
             ordered.append(c)
+
+    # Week Of (Mon) always last if present
+    if "Week Of (Mon)" in cols:
+        ordered.append("Week Of (Mon)")
+
     remaining = [c for c in cols if c not in ordered]
     return df[ordered + remaining]
 
@@ -51,7 +78,8 @@ def _reorder_metrics(df: pd.DataFrame, id_cols: List[str]) -> pd.DataFrame:
 def build_performance_tables(actions_dedup: pd.DataFrame,
                              response_dedup: pd.DataFrame,
                              df_compile: pd.DataFrame,
-                             rank_table: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+                             rank_table: pd.DataFrame,
+                             client_name: str = "UNKNOWN") -> Dict[str, pd.DataFrame]:
     """Build all performance analysis tables with weekly aggregation."""
 
     # Actions derived fields (+ week)
@@ -95,12 +123,15 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
     channel = station_spend_w.merge(resp_by_station_w, on=["Station", "Week Of (Mon)"], how="outer") \
                              .merge(pivot_station_w, on=["Station", "Week Of (Mon)"], how="outer")
 
+    # Add Client column
+    channel["Client"] = client_name
+
     for col in channel.columns:
-        if col not in {"Station", "Week Of (Mon)"}:
+        if col not in {"Station", "Week Of (Mon)", "Client"}:
             channel[col] = coerce_numeric(channel[col]).fillna(0)
 
     channel["Cost per Response"] = np.where(channel.get("Responses", 0) > 0, channel["Cost"] / channel["Responses"], np.nan)
-    action_cols = [c for c in channel.columns if c not in {"Station", "Week Of (Mon)", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
+    action_cols = [c for c in channel.columns if c not in {"Station", "Week Of (Mon)", "Client", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
     if action_cols:
         channel["Actions_Total"] = channel[action_cols].sum(axis=1)
         for act_col in action_cols:
@@ -126,13 +157,16 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
     channel_by_creative = base_sc_w.merge(cb_resp_w, on=["Station", "Creative", "Week Of (Mon)"], how="outer") \
                                    .merge(pac_w, on=["Station", "Creative", "Week Of (Mon)"], how="outer")
 
+    # Add Client column
+    channel_by_creative["Client"] = client_name
+
     for col in channel_by_creative.columns:
-        if col not in {"Station", "Creative", "Week Of (Mon)"}:
+        if col not in {"Station", "Creative", "Week Of (Mon)", "Client"}:
             channel_by_creative[col] = coerce_numeric(channel_by_creative[col]).fillna(0)
 
     channel_by_creative["Cost per Response"] = np.where(channel_by_creative.get("Responses", 0) > 0, channel_by_creative["Cost"] / channel_by_creative["Responses"], np.nan)
 
-    action_cols_cb = [c for c in channel_by_creative.columns if c not in {"Station", "Creative", "Week Of (Mon)", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
+    action_cols_cb = [c for c in channel_by_creative.columns if c not in {"Station", "Creative", "Week Of (Mon)", "Client", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
     if action_cols_cb:
         channel_by_creative["Actions_Total"] = channel_by_creative[action_cols_cb].sum(axis=1)
         for act_col in action_cols_cb:
@@ -145,7 +179,7 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
     # ----------------- CREATIVE (weekly) -----------------
     sum_cols = [
         c for c in channel_by_creative.columns
-        if c not in {"Station", "Creative", "Week Of (Mon)"} and not str(c).startswith("Cost per ")
+        if c not in {"Station", "Creative", "Week Of (Mon)", "Client"} and not str(c).startswith("Cost per ")
     ]
 
     creative = (
@@ -155,8 +189,11 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
             .sum(numeric_only=True)
     )
 
+    # Add Client column
+    creative["Client"] = client_name
+
     # Recompute ratios from the summed bases
-    fixed_base = {"Creative", "Week Of (Mon)", "Cost", "Responses", "Impressions"}
+    fixed_base = {"Creative", "Week Of (Mon)", "Client", "Cost", "Responses", "Impressions"}
     action_cols = [c for c in creative.columns if c not in fixed_base and not str(c).startswith("Cost per ")]
 
     if action_cols:
@@ -181,8 +218,11 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
     day = day_spend_w.rename(columns={"Day": "VisitWeekday"}).merge(day_counts_r_w, on=["VisitWeekday", "Week Of (Mon)"], how="outer") \
                      .merge(pad_w, on=["VisitWeekday", "Week Of (Mon)"], how="outer")
 
+    # Add Client column
+    day["Client"] = client_name
+
     for col in day.columns:
-        if col not in {"VisitWeekday", "Week Of (Mon)"}:
+        if col not in {"VisitWeekday", "Week Of (Mon)", "Client"}:
             day[col] = coerce_numeric(day[col]).fillna(0)
     day["Cost per Response"] = np.where(day["Responses"] > 0, day["Cost"] / day["Responses"], np.nan)
 
@@ -213,12 +253,16 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
                      .merge(hour_counts_r_w, on=["Hour", "Week Of (Mon)"], how="left") \
                      .merge(pah_w, on=["Hour", "Week Of (Mon)"], how="left")
 
+    # Add Client and Daypart columns
+    hour["Client"] = client_name
+    hour["Daypart"] = hour["Hour"].apply(hour_to_daypart)
+
     for col in hour.columns:
-        if col not in {"Hour", "Week Of (Mon)"}:
+        if col not in {"Hour", "Daypart", "Week Of (Mon)", "Client"}:
             hour[col] = coerce_numeric(hour[col]).fillna(0)
     hour["Cost per Response"] = np.where(hour["Responses"] > 0, hour["Cost"] / hour["Responses"], np.nan)
     hour = hour.sort_values(["Week Of (Mon)", "Hour"])
-    hour = _reorder_metrics(hour, ["Hour"])
+    hour = _reorder_metrics(hour, ["Hour", "Daypart"])
 
     # ----------------- CHANNEL BY HOUR (weekly) -----------------
     resp_sh_w = r.groupby(["Station", "VisitHour", "Week Of (Mon)"], as_index=False).size().rename(columns={"size": "Responses", "VisitHour": "Hour"})
@@ -245,12 +289,16 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
                              .merge(resp_sh_w, on=["Station", "Hour", "Week Of (Mon)"], how="left") \
                              .merge(pah_sh_w, on=["Station", "Hour", "Week Of (Mon)"], how="left")
 
+    # Add Client and Daypart columns
+    channel_by_hour["Client"] = client_name
+    channel_by_hour["Daypart"] = channel_by_hour["Hour"].apply(hour_to_daypart)
+
     for col in channel_by_hour.columns:
-        if col not in {"Station", "Hour", "Week Of (Mon)"}:
+        if col not in {"Station", "Hour", "Daypart", "Week Of (Mon)", "Client"}:
             channel_by_hour[col] = coerce_numeric(channel_by_hour[col]).fillna(0)
 
     channel_by_hour["Cost per Response"] = np.where(channel_by_hour.get("Responses", 0) > 0, channel_by_hour["Cost"] / channel_by_hour["Responses"], np.nan)
-    action_cols_sh = [c for c in channel_by_hour.columns if c not in {"Station", "Hour", "Week Of (Mon)", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
+    action_cols_sh = [c for c in channel_by_hour.columns if c not in {"Station", "Hour", "Daypart", "Week Of (Mon)", "Client", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
     if action_cols_sh:
         channel_by_hour["Actions_Total"] = channel_by_hour[action_cols_sh].sum(axis=1)
         for act_col in action_cols_sh:
@@ -258,7 +306,7 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
         channel_by_hour["Cost per Actions_Total"] = np.where(channel_by_hour["Actions_Total"] > 0, channel_by_hour["Cost"] / channel_by_hour["Actions_Total"], np.nan)
 
     channel_by_hour = channel_by_hour.sort_values(["Week Of (Mon)", "Station", "Hour"])
-    channel_by_hour = _reorder_metrics(channel_by_hour, ["Station", "Hour"])
+    channel_by_hour = _reorder_metrics(channel_by_hour, ["Station", "Hour", "Daypart"])
 
     # ----------------- Detail tabs (row-level week already present) -----------------
     tmp_a = a.rename(columns={"Timestamp": "ActionTimestamp"})
@@ -283,7 +331,8 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
 
 def build_market_table(actions_dedup: pd.DataFrame,
                        response_dedup: pd.DataFrame,
-                       spend: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+                       spend: Dict[str, pd.DataFrame],
+                       client_name: str = "UNKNOWN") -> pd.DataFrame:
     """Build market table (weekly) — mirrors Channel, keyed by Market + Week."""
 
     a = actions_dedup.copy()
@@ -315,13 +364,16 @@ def build_market_table(actions_dedup: pd.DataFrame,
     market = market_spend_w.merge(resp_by_market_w, on=["Market", "Week Of (Mon)"], how="outer") \
                            .merge(pivot_market_w, on=["Market", "Week Of (Mon)"], how="outer")
 
+    # Add Client column
+    market["Client"] = client_name
+
     for col in market.columns:
-        if col not in {"Market", "Week Of (Mon)"}:
+        if col not in {"Market", "Week Of (Mon)", "Client"}:
             market[col] = coerce_numeric(market[col]).fillna(0)
 
     market["Cost per Response"] = np.where(market.get("Responses", 0) > 0, market["Cost"] / market["Responses"], np.nan)
 
-    action_cols = [c for c in market.columns if c not in {"Market", "Week Of (Mon)", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
+    action_cols = [c for c in market.columns if c not in {"Market", "Week Of (Mon)", "Client", "Cost", "Responses", "Cost per Response", "Impressions"} and not str(c).startswith("Cost per ")]
     if action_cols:
         market["Actions_Total"] = market[action_cols].sum(axis=1)
         for act_col in action_cols:
