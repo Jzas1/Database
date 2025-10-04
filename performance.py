@@ -79,7 +79,9 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
                              response_dedup: pd.DataFrame,
                              df_compile: pd.DataFrame,
                              rank_table: pd.DataFrame,
-                             client_name: str = "UNKNOWN") -> Dict[str, pd.DataFrame]:
+                             client_name: str = "UNKNOWN",
+                             actions_raw: pd.DataFrame = None,
+                             response_raw: pd.DataFrame = None) -> Dict[str, pd.DataFrame]:
     """Build all performance analysis tables with weekly aggregation."""
 
     # Actions derived fields (+ week)
@@ -310,11 +312,41 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
 
     # ----------------- Detail tabs (row-level week already present) -----------------
     tmp_a = a.rename(columns={"Timestamp": "ActionTimestamp"})
-    cols_a = [c for c in ["SessionID", "Action", "ActionTimestamp", "Station", "Creative", "Probability", "ActionHour", "ActionWeekday", "Week Of (Mon)"] if c in tmp_a.columns]
+
+    # Merge back ALL raw columns (except probability columns) if raw data provided
+    if actions_raw is not None and len(actions_raw) > 0:
+        # Filter out probability columns and columns that already exist
+        existing_cols_lower = {c.lower() for c in tmp_a.columns}
+        raw_cols = [c for c in actions_raw.columns
+                    if "probability" not in c.lower()
+                    and c.lower() not in existing_cols_lower]
+        if raw_cols:
+            actions_raw_filtered = actions_raw[raw_cols]
+            # Merge on SourceRowID if available
+            if "SourceRowID" in tmp_a.columns:
+                tmp_a = tmp_a.merge(actions_raw_filtered, left_on="SourceRowID", right_index=True, how="left")
+
+    # Include ALL columns except those with "probability" in the name
+    cols_a = [c for c in tmp_a.columns if "probability" not in c.lower()]
     actions_sheet = tmp_a[cols_a].sort_values(["Week Of (Mon)", "ActionTimestamp"]) if len(tmp_a) and "ActionTimestamp" in tmp_a.columns else pd.DataFrame(columns=cols_a)
 
     tmp_r = r.rename(columns={"Timestamp": "VisitTimestamp"})
-    cols_r = [c for c in ["SessionID", "VisitTimestamp", "Station", "Creative", "VisitHour", "VisitWeekday", "Week Of (Mon)"] if c in tmp_r.columns]
+
+    # Merge back ALL raw columns (except probability columns) if raw data provided
+    if response_raw is not None and len(response_raw) > 0:
+        # Filter out probability columns and columns that already exist
+        existing_cols_lower = {c.lower() for c in tmp_r.columns}
+        raw_cols = [c for c in response_raw.columns
+                    if "probability" not in c.lower()
+                    and c.lower() not in existing_cols_lower]
+        if raw_cols:
+            response_raw_filtered = response_raw[raw_cols]
+            # Merge on SourceRowID if available
+            if "SourceRowID" in tmp_r.columns:
+                tmp_r = tmp_r.merge(response_raw_filtered, left_on="SourceRowID", right_index=True, how="left")
+
+    # Include ALL columns except those with "probability" in the name
+    cols_r = [c for c in tmp_r.columns if "probability" not in c.lower()]
     response_sheet = tmp_r[cols_r].sort_values(["Week Of (Mon)", "VisitTimestamp"]) if len(tmp_r) and "VisitTimestamp" in tmp_r.columns else pd.DataFrame(columns=cols_r)
 
     return {

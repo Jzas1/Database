@@ -138,7 +138,7 @@ def main():
 
         # 6. Build performance tables
         logger.info("Building performance tables...")
-        perf_tabs = build_performance_tables(actions_dedup, response_dedup, df_compile, rank_table, client_name)
+        perf_tabs = build_performance_tables(actions_dedup, response_dedup, df_compile, rank_table, client_name, df_actions_raw, df_response_raw)
         spend = build_compile_spend(df_compile)
         market_df = build_market_table(actions_dedup, response_dedup, spend, client_name)
 
