@@ -181,7 +181,7 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
     # ----------------- CREATIVE (weekly) -----------------
     sum_cols = [
         c for c in channel_by_creative.columns
-        if c not in {"Station", "Creative", "Week Of (Mon)", "Client"} and not str(c).startswith("Cost per ")
+        if c not in {"Station", "Creative", "Week Of (Mon)", "Client", "Actions_Total"} and not str(c).startswith("Cost per ")
     ]
 
     creative = (
