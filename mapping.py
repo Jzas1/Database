@@ -90,7 +90,7 @@ def map_actions(df_actions_raw: pd.DataFrame) -> pd.DataFrame:
     if market_col:
         market_raw = pd.Series(df[market_col], dtype="string").str.strip()
         # Normalize: "national" → "National", "National Cable" → "National", "National Network" → "National"
-        out["Market"] = market_raw.str.replace(r'(?i)^national\s*(cable|network)?$', 'National', regex=True)
+        out["Market"] = market_raw.str.replace(r'(?i)^national(\s+(cable|network))?\s*$', 'National', regex=True)
 
     out["Station"] = norm_station_series(out["Station"]).fillna("UNKNOWN")
 
@@ -130,7 +130,7 @@ def map_response(df_response_raw: pd.DataFrame) -> pd.DataFrame:
     if market_col:
         market_raw = pd.Series(df[market_col], dtype="string").str.strip()
         # Normalize: "national" → "National", "National Cable" → "National", "National Network" → "National"
-        out["Market"] = market_raw.str.replace(r'(?i)^national\s*(cable|network)?$', 'National', regex=True)
+        out["Market"] = market_raw.str.replace(r'(?i)^national(\s+(cable|network))?\s*$', 'National', regex=True)
 
     out["Station"] = norm_station_series(out["Station"]).fillna("UNKNOWN")
     return out

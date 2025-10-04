@@ -123,7 +123,7 @@ def build_compile_spend(df_compile: pd.DataFrame) -> Dict[str, pd.DataFrame]:
             impr_name = "Impressions"
         mk.rename(columns={market_col: "Market", cost_col: "Cost", impr_name: "Impressions"}, inplace=True)
         # Normalize Market: "National Cable", "National Network" → "National"
-        mk["Market"] = mk["Market"].astype(str).str.strip().str.replace(r'(?i)^national\s*(cable|network)\s*$', 'National', regex=True)
+        mk["Market"] = mk["Market"].astype(str).str.strip().str.replace(r'(?i)^national(\s+(cable|network))?\s*$', 'National', regex=True)
         market_spend = mk.groupby("Market", as_index=False).agg(Cost=("Cost", "sum"), Impressions=("Impressions", "sum"))
     else:
         market_spend = pd.DataFrame(columns=["Market", "Cost", "Impressions"])
