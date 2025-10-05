@@ -201,6 +201,23 @@ def main():
         logger.info(f"SUCCESS: Excel workbook written: {out_path}")
         logger.info(f"  File size: {out_path.stat().st_size / 1024 / 1024:.2f} MB")
 
+        # 9b. Export MasterGrain to CSV for database ingestion
+        master_grain_df = perf_tabs.get("MasterGrain")
+        if master_grain_df is not None and len(master_grain_df) > 0:
+            csv_path = FOLDER / f"MasterGrain_{ts}.csv"
+            logger.info(f"Exporting MasterGrain to CSV: {csv_path.name}")
+            master_grain_df.to_csv(csv_path, index=False)
+            logger.info(f"  Exported {len(master_grain_df):,} rows to CSV")
+
+            # Print total cost
+            total_cost = master_grain_df["Cost"].sum()
+            logger.info(f"  ✓ MasterGrain total Cost: ${total_cost:,.2f}")
+            print(f"\n{'='*80}")
+            print(f"MASTERGRAIN TOTAL COST: ${total_cost:,.2f}")
+            print(f"{'='*80}\n")
+        else:
+            logger.warning("MasterGrain table is empty, skipping CSV export")
+
         # 10. Google Sheets push (optional)
         logger.info("Checking Google Sheets configuration...")
         sheets_mode_cli, sheets_client_cli, sheets_tabs_cli = _get_sheets_cli_overrides()

@@ -349,6 +349,10 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
     cols_r = [c for c in tmp_r.columns if "probability" not in c.lower()]
     response_sheet = tmp_r[cols_r].sort_values(["Week Of (Mon)", "VisitTimestamp"]) if len(tmp_r) and "VisitTimestamp" in tmp_r.columns else pd.DataFrame(columns=cols_r)
 
+    # ----------------- MASTER GRAIN (for database) -----------------
+    # Finest grain: Market, Station, Creative, Daypart, Hour, Week
+    master_grain = build_master_grain_table(a, r, df_compile, client_name)
+
     return {
         "Channel": channel,
         "Creative": creative,
@@ -358,7 +362,155 @@ def build_performance_tables(actions_dedup: pd.DataFrame,
         "Channel by Hour": channel_by_hour,
         "Actions": actions_sheet,
         "Response": response_sheet,
+        "MasterGrain": master_grain,
     }
+
+
+def build_master_grain_table(actions_dedup: pd.DataFrame,
+                             response_dedup: pd.DataFrame,
+                             df_compile: pd.DataFrame,
+                             client_name: str) -> pd.DataFrame:
+    """
+    Build master grain table: Market, Station, Creative, Daypart, Hour, Week
+
+    SIMPLE APPROACH:
+    1. Get costs from Compile by Station+Creative+Hour+Week (using AIR TIME for hour)
+    2. Get responses from Response by Station+Creative+Hour+Week (using RESPONSE TIME for hour)
+    3. Outer join them - if no cost, leave blank; if no response, show 0
+    """
+    from normalization import coerce_hour_series, first_col_by_keys
+
+    a = actions_dedup.copy()
+    r = response_dedup.copy()
+    c = df_compile.copy()
+
+    # ========================================================================
+    # PART 1: Build cost table from COMPILE (using AIR TIME for hour)
+    # ========================================================================
+
+    # Find columns in compile
+    station_col = first_col_by_keys(c, ["station", "stationname", "channel"])
+    creative_col = first_col_by_keys(c, ["tapeaired", "programaired", "creative", "szspottitle"])
+    cost_col = first_col_by_keys(c, ["clientgross", "clientgrossamt", "cost", "gross", "spend"])
+    impr_col = first_col_by_keys(c, ["impressions"])
+    date_col = first_col_by_keys(c, ["dateaired", "dateairedmmddyyyy", "dateairedyyyymmdd", "dateairedyyyy-mm-dd", "dateaired2024", "dateairedmmyy", "datea", "date_aired", "airdate", "date"])
+    time_col = first_col_by_keys(c, ["timeaired", "time_aired", "airtime", "time"])
+    market_col = first_col_by_keys(c, ["market", "t_adspots_market"])
+
+    if not all([station_col, creative_col, cost_col, date_col, time_col]):
+        raise ValueError(f"Compile missing required columns. Found: {list(c.columns)}")
+
+    # Build compile grain table
+    compile_grain = c[[station_col, creative_col, cost_col, date_col, time_col]].copy()
+    if impr_col:
+        compile_grain["Impressions"] = coerce_numeric(c[impr_col]).fillna(0)
+    else:
+        compile_grain["Impressions"] = 0
+    if market_col:
+        compile_grain["Market"] = c[market_col].astype(str).str.strip().str.replace(r'(?i)^national(\s+(cable|network))?\s*$', 'National', regex=True)
+    else:
+        compile_grain["Market"] = "UNKNOWN"
+
+    compile_grain["Station"] = norm_station_series(c[station_col]).fillna("UNKNOWN")
+    compile_grain["Creative"] = c[creative_col].astype(str).str.strip().str.upper()
+    compile_grain["Cost"] = coerce_numeric(c[cost_col]).fillna(0)
+    compile_grain["_date"] = coerce_datetime(c[date_col])
+    compile_grain["Week Of (Mon)"] = week_label_series(compile_grain["_date"])
+    compile_grain["Hour"] = coerce_hour_series(c[time_col])
+    compile_grain["Daypart"] = compile_grain["Hour"].apply(hour_to_daypart)
+
+    # Remove rows with no hour data
+    compile_grain = compile_grain[compile_grain["Hour"].notna()].copy()
+    compile_grain["Hour"] = compile_grain["Hour"].astype(int)
+
+    # Aggregate by master grain
+    cost_grain = compile_grain.groupby(["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"], as_index=False).agg({
+        "Cost": "sum",
+        "Impressions": "sum"
+    })
+
+    # ========================================================================
+    # PART 2: Build response table from RESPONSE (using RESPONSE TIME for hour)
+    # ========================================================================
+
+    # Add timestamps and derived fields for responses
+    r_ts = coerce_datetime(r["Timestamp"]) if "Timestamp" in r.columns else pd.Series([], dtype="datetime64[ns]")
+
+    r["Hour"] = r_ts.dt.hour
+    r["Daypart"] = r["Hour"].apply(hour_to_daypart)
+    r["Week Of (Mon)"] = week_label_series(r_ts)
+
+    # Normalize columns
+    if "Station" in r.columns:
+        r["Station"] = norm_station_series(r["Station"]).fillna("UNKNOWN")
+    if "Creative" not in r.columns:
+        r["Creative"] = "ALL"
+    if "Market" not in r.columns:
+        r["Market"] = "UNKNOWN"
+
+    # Aggregate responses by master grain
+    resp_grain = r.groupby(["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"], as_index=False).size().rename(columns={"size": "Responses"})
+
+    # ========================================================================
+    # PART 3: Build actions table
+    # ========================================================================
+
+    # Add timestamps and derived fields for actions
+    a_ts = coerce_datetime(a["Timestamp"]) if "Timestamp" in a.columns else pd.Series([], dtype="datetime64[ns]")
+
+    a["Hour"] = a_ts.dt.hour
+    a["Daypart"] = a["Hour"].apply(hour_to_daypart)
+    a["Week Of (Mon)"] = week_label_series(a_ts)
+
+    # Normalize columns
+    if "Station" in a.columns:
+        a["Station"] = norm_station_series(a["Station"]).fillna("UNKNOWN")
+    if "Creative" not in a.columns:
+        a["Creative"] = "ALL"
+    if "Market" not in a.columns:
+        a["Market"] = "UNKNOWN"
+
+    # Aggregate actions by master grain
+    if len(a) > 0 and "Action" in a.columns:
+        action_grain = a.groupby(["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)", "Action"], as_index=False).size()
+        action_pivot = action_grain.pivot(
+            index=["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"],
+            columns="Action",
+            values="size"
+        ).fillna(0).reset_index()
+    else:
+        action_pivot = pd.DataFrame(columns=["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"])
+
+    # ========================================================================
+    # PART 4: OUTER JOIN everything together
+    # ========================================================================
+
+    # Start with cost grain (ads that aired)
+    master = cost_grain.copy()
+
+    # Add responses (outer join - keep rows even if no response)
+    master = master.merge(resp_grain, on=["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"], how="outer")
+
+    # Add actions (outer join - keep rows even if no actions)
+    master = master.merge(action_pivot, on=["Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"], how="outer")
+
+    # Fill NAs
+    master["Responses"] = master["Responses"].fillna(0).astype(int)
+    master["Cost"] = master["Cost"].fillna(0).astype(float)
+    master["Impressions"] = master["Impressions"].fillna(0).astype(float)
+    master["Market"] = master["Market"].fillna("UNKNOWN")
+
+    # Add client
+    master["Client"] = client_name
+
+    # Coerce numeric columns
+    for col in master.columns:
+        if col not in {"Client", "Market", "Station", "Creative", "Daypart", "Hour", "Week Of (Mon)"}:
+            master[col] = coerce_numeric(master[col]).fillna(0)
+
+    return master
+
+
 
 
 def build_market_table(actions_dedup: pd.DataFrame,
