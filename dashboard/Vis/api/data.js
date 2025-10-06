@@ -42,6 +42,19 @@ async function fetchSheetData() {
           value = value.replace(/[$,]/g, '');
           value = parseFloat(value) || 0;
         }
+        // Parse dates to YYYY-MM-DD format
+        else if (header === 'date' || header === 'week_of_mon') {
+          if (value) {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              // Format as YYYY-MM-DD
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              value = `${year}-${month}-${day}`;
+            }
+          }
+        }
         obj[header] = value;
       });
       return obj;
@@ -141,13 +154,16 @@ export default async function handler(req, res) {
       case 'daily-trend':
         const byDate = {};
         filtered.forEach(r => {
+          // Skip rows with invalid or empty dates
+          if (!r.date || r.date === '' || r.date === 'Invalid Date') return;
+
           if (!byDate[r.date]) byDate[r.date] = { date: r.date, total_cost: 0, total_responses: 0, total_sales: 0, total_impressions: 0 };
           byDate[r.date].total_cost += r.cost;
           byDate[r.date].total_responses += r.responses;
           byDate[r.date].total_sales += r.sale;
           byDate[r.date].total_impressions += r.impressions;
         });
-        return res.json(Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date)));
+        return res.json(Object.values(byDate).filter(d => d.date).sort((a, b) => a.date.localeCompare(b.date)));
 
       case 'custom-breakdown':
         const dimensions = req.query.dimensions?.split(',') || ['station', 'daypart'];
