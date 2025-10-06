@@ -258,11 +258,9 @@ export default function PerformanceDashboard() {
           ...(endDate && { end_date: endDate })
         });
 
-        // Station details endpoint not implemented for Google Sheets yet
-        // const res = await fetch(`${API_BASE}?endpoint=station-details&station=${encodeURIComponent(selectedStation)}&${params}`);
-        // const data = await res.json();
-        // setStationDetails(data);
-        setStationDetails(null);
+        const res = await fetch(`${API_BASE}?endpoint=station-details&station=${encodeURIComponent(selectedStation)}&${params}`);
+        const data = await res.json();
+        setStationDetails(data);
       } catch (e) {
         console.error("Failed to load station details:", e);
       } finally {

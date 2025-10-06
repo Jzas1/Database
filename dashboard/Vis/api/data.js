@@ -4,6 +4,52 @@
 
 const SHEET_ID = '1fxzBgdvOAnRy_OQhZEYLK9rttjagzukI4xajbxz7z68';
 const SHEET_GID = '0';
+const CLEARANCE_GID = '694714850'; // Clearance tab GID
+
+async function fetchClearanceData() {
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${CLEARANCE_GID}`;
+  const response = await fetch(csvUrl);
+  if (!response.ok) throw new Error('Failed to fetch clearance sheet');
+
+  const csvText = await response.text();
+  const rows = csvText.split('\n').map(row => {
+    const fields = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    fields.push(current.trim());
+    return fields;
+  });
+
+  const headers = rows[0].map(h => h.toLowerCase().replace(/\s+/g, '_').replace(/[()]/g, ''));
+  return rows.slice(1)
+    .filter(row => row.length > 1 && row[0])
+    .map(row => {
+      const obj = {};
+      headers.forEach((header, i) => {
+        let value = row[i] || '';
+        // Parse numbers
+        if (header === 'ord_spots' || header === 'booked_gross' || header === 'spots_ran' ||
+            header === 'cleared_gross' || header === 'booked_cf' || header === 'cleared_cf' ||
+            header === 'pct_cleared') {
+          value = value.replace(/[$,]/g, '');
+          value = parseFloat(value) || 0;
+        }
+        obj[header] = value;
+      });
+      return obj;
+    });
+}
 
 async function fetchSheetData() {
   const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
@@ -200,6 +246,66 @@ export default async function handler(req, res) {
           s.cost_per_response = s.total_responses > 0 ? s.total_cost / s.total_responses : null;
         });
         return res.json(Object.values(byStationDaypart).sort((a, b) => a.station.localeCompare(b.station) || b.total_cost - a.total_cost));
+
+      case 'station-details':
+        const station = req.query.station;
+        if (!station) return res.status(400).json({ error: 'Station parameter required' });
+
+        // Get master grain aggregates for this station
+        const stationData = filtered.filter(r => r.station === station);
+        const metrics = {
+          total_cost: stationData.reduce((sum, r) => sum + r.cost, 0),
+          total_impressions: stationData.reduce((sum, r) => sum + r.impressions, 0),
+          total_responses: stationData.reduce((sum, r) => sum + r.responses, 0),
+          total_sales: stationData.reduce((sum, r) => sum + r.sale, 0)
+        };
+        metrics.cpm = metrics.total_impressions > 0 ? (metrics.total_cost / metrics.total_impressions) * 1000 : null;
+
+        // Get best daypart
+        const dayparts = {};
+        stationData.forEach(r => {
+          if (!dayparts[r.daypart]) dayparts[r.daypart] = { daypart: r.daypart, total_sales: 0, total_cost: 0 };
+          dayparts[r.daypart].total_sales += r.sale;
+          dayparts[r.daypart].total_cost += r.cost;
+        });
+        const bestDaypart = Object.values(dayparts).sort((a, b) => b.total_sales - a.total_sales)[0] || null;
+        if (bestDaypart) {
+          bestDaypart.cost_per_sale = bestDaypart.total_sales > 0 ? bestDaypart.total_cost / bestDaypart.total_sales : null;
+        }
+
+        // Get best creative
+        const creatives = {};
+        stationData.forEach(r => {
+          if (!creatives[r.creative]) creatives[r.creative] = { creative: r.creative, total_sales: 0, total_cost: 0 };
+          creatives[r.creative].total_sales += r.sale;
+          creatives[r.creative].total_cost += r.cost;
+        });
+        const bestCreative = Object.values(creatives).sort((a, b) => b.total_sales - a.total_sales)[0] || null;
+        if (bestCreative) {
+          bestCreative.cost_per_sale = bestCreative.total_sales > 0 ? bestCreative.total_cost / bestCreative.total_sales : null;
+        }
+
+        // Get clearance data
+        const clearanceData = await fetchClearanceData();
+        const clearanceFiltered = clearanceData.filter(r => r.station && r.station.trim() === station.trim());
+        if (start_date) clearanceFiltered = clearanceFiltered.filter(r => r.week_of >= start_date);
+        if (end_date) clearanceFiltered = clearanceFiltered.filter(r => r.week_of <= end_date);
+
+        const clearance = {
+          total_booked_cf: clearanceFiltered.reduce((sum, r) => sum + (r.booked_cf || 0), 0),
+          total_cleared_cf: clearanceFiltered.reduce((sum, r) => sum + (r.cleared_cf || 0), 0),
+          total_spots_ran: clearanceFiltered.reduce((sum, r) => sum + (r.spots_ran || 0), 0),
+          total_ord_spots: clearanceFiltered.reduce((sum, r) => sum + (r.ord_spots || 0), 0)
+        };
+        clearance.clearance_pct = clearance.total_booked_cf > 0 ? clearance.total_cleared_cf / clearance.total_booked_cf : null;
+
+        return res.json({
+          station,
+          metrics,
+          best_daypart: bestDaypart,
+          best_creative: bestCreative,
+          clearance
+        });
 
       default:
         return res.status(400).json({ error: 'Invalid endpoint' });
