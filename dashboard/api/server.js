@@ -513,16 +513,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server (for local development)
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`✓ API server running on http://localhost:${PORT}`);
-    console.log(`✓ Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
-    console.log(`✓ Health check: http://localhost:${PORT}/health`);
-  });
-}
+// Start server
+app.listen(PORT, () => {
+  console.log(`✓ API server running on port ${PORT}`);
+  console.log(`✓ Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+  console.log(`✓ Health check available at /health`);
+});
 
-// Export for Vercel serverless
+// Export for Vercel serverless (when needed)
 export default app;
 
 // Graceful shutdown
