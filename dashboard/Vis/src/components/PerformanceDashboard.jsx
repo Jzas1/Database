@@ -21,7 +21,7 @@ import {
   ReferenceArea,
 } from "recharts";
 
-const API_BASE = "https://api-jtwtrpzm0-joseph-zasiebidas-projects.vercel.app/api";
+const API_BASE = "https://api-j82jh1pvm-joseph-zasiebidas-projects.vercel.app/api";
 
 // ---------- helpers ----------
 const fmtInt = (n) => {
