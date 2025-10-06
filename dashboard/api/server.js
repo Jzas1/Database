@@ -54,8 +54,8 @@ app.get('/api/date-range', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        MIN(week_of) as min_date,
-        MAX(week_of) as max_date
+        MIN(date) as min_date,
+        MAX(date) as max_date
       FROM mynt.fact_master_grain
     `);
     res.json(result.rows[0]);
@@ -104,11 +104,11 @@ app.get('/api/kpis', async (req, res) => {
     }
     if (start_date) {
       params.push(start_date);
-      query += ` AND week_of >= $${params.length}`;
+      query += ` AND date >= $${params.length}`;
     }
     if (end_date) {
       params.push(end_date);
-      query += ` AND week_of <= $${params.length}`;
+      query += ` AND date <= $${params.length}`;
     }
 
     const result = await pool.query(query, params);
@@ -130,7 +130,6 @@ app.get('/api/station-performance', async (req, res) => {
         SUM(cost) as total_cost,
         SUM(responses) as total_responses,
         SUM(sale) as total_sales,
-        SUM(actions_total) as total_actions,
         SUM(impressions) as total_impressions,
         CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale,
         CASE WHEN SUM(responses) > 0 THEN SUM(cost) / SUM(responses) ELSE NULL END as cost_per_response
@@ -145,11 +144,11 @@ app.get('/api/station-performance', async (req, res) => {
     }
     if (start_date) {
       params.push(start_date);
-      query += ` AND week_of >= $${params.length}`;
+      query += ` AND date >= $${params.length}`;
     }
     if (end_date) {
       params.push(end_date);
-      query += ` AND week_of <= $${params.length}`;
+      query += ` AND date <= $${params.length}`;
     }
 
     query += `
@@ -176,7 +175,6 @@ app.get('/api/daypart-performance', async (req, res) => {
         SUM(cost) as total_cost,
         SUM(responses) as total_responses,
         SUM(sale) as total_sales,
-        SUM(actions_total) as total_actions,
         SUM(impressions) as total_impressions,
         CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale,
         CASE WHEN SUM(responses) > 0 THEN SUM(cost) / SUM(responses) ELSE NULL END as cost_per_response
@@ -191,11 +189,11 @@ app.get('/api/daypart-performance', async (req, res) => {
     }
     if (start_date) {
       params.push(start_date);
-      query += ` AND week_of >= $${params.length}`;
+      query += ` AND date >= $${params.length}`;
     }
     if (end_date) {
       params.push(end_date);
-      query += ` AND week_of <= $${params.length}`;
+      query += ` AND date <= $${params.length}`;
     }
 
     query += `
@@ -223,7 +221,6 @@ app.get('/api/station-by-daypart', async (req, res) => {
         SUM(cost) as total_cost,
         SUM(responses) as total_responses,
         SUM(sale) as total_sales,
-        SUM(actions_total) as total_actions,
         SUM(impressions) as total_impressions,
         CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale,
         CASE WHEN SUM(responses) > 0 THEN SUM(cost) / SUM(responses) ELSE NULL END as cost_per_response
@@ -238,11 +235,11 @@ app.get('/api/station-by-daypart', async (req, res) => {
     }
     if (start_date) {
       params.push(start_date);
-      query += ` AND week_of >= $${params.length}`;
+      query += ` AND date >= $${params.length}`;
     }
     if (end_date) {
       params.push(end_date);
-      query += ` AND week_of <= $${params.length}`;
+      query += ` AND date <= $${params.length}`;
     }
 
     query += `
@@ -258,14 +255,122 @@ app.get('/api/station-by-daypart', async (req, res) => {
   }
 });
 
-// Get weekly trend
-app.get('/api/weekly-trend', async (req, res) => {
+// Get custom breakdown (flexible dimensions)
+app.get('/api/custom-breakdown', async (req, res) => {
+  try {
+    const { client, start_date, end_date, dimensions } = req.query;
+    console.log('Custom breakdown request:', { client, start_date, end_date, dimensions });
+
+    // dimensions can be: creative, station, daypart, market (comma-separated)
+    const validDimensions = ['creative', 'station', 'daypart', 'market'];
+    const selectedDimensions = dimensions
+      ? dimensions.split(',').filter(d => validDimensions.includes(d))
+      : ['station', 'daypart'];
+
+    if (selectedDimensions.length === 0) {
+      return res.status(400).json({ error: 'No valid dimensions provided' });
+    }
+
+    const dimColumns = selectedDimensions.join(', ');
+
+    let query = `
+      SELECT
+        ${dimColumns},
+        SUM(cost) as total_cost,
+        SUM(responses) as total_responses,
+        SUM(sale) as total_sales,
+        SUM(impressions) as total_impressions,
+        CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale,
+        CASE WHEN SUM(responses) > 0 THEN SUM(cost) / SUM(responses) ELSE NULL END as cost_per_response
+      FROM mynt.fact_master_grain
+      WHERE 1=1
+    `;
+
+    const params = [];
+    if (client) {
+      params.push(client);
+      query += ` AND client_name = $${params.length}`;
+    }
+    if (start_date) {
+      params.push(start_date);
+      query += ` AND date >= $${params.length}`;
+    }
+    if (end_date) {
+      params.push(end_date);
+      query += ` AND date <= $${params.length}`;
+    }
+
+    query += `
+      GROUP BY ${dimColumns}
+      ORDER BY total_cost DESC
+      LIMIT 500
+    `;
+
+    console.log('Executing query:', query);
+    console.log('With params:', params);
+
+    const result = await pool.query(query, params);
+    console.log('Custom breakdown returned', result.rows.length, 'rows');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Custom breakdown error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get creative performance for bubble chart
+app.get('/api/creative-performance', async (req, res) => {
   try {
     const { client, start_date, end_date } = req.query;
 
     let query = `
       SELECT
-        week_of,
+        creative,
+        SUM(cost) as total_cost,
+        SUM(sale) as total_sales,
+        SUM(responses) as total_responses,
+        CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale
+      FROM mynt.fact_master_grain
+      WHERE 1=1
+    `;
+
+    const params = [];
+    if (client) {
+      params.push(client);
+      query += ` AND client_name = $${params.length}`;
+    }
+    if (start_date) {
+      params.push(start_date);
+      query += ` AND date >= $${params.length}`;
+    }
+    if (end_date) {
+      params.push(end_date);
+      query += ` AND date <= $${params.length}`;
+    }
+
+    query += `
+      GROUP BY creative
+      HAVING SUM(sale) > 0
+      ORDER BY total_sales DESC
+      LIMIT 20
+    `;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Creative performance error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get daily trend
+app.get('/api/daily-trend', async (req, res) => {
+  try {
+    const { client, start_date, end_date } = req.query;
+
+    let query = `
+      SELECT
+        date,
         SUM(cost) as total_cost,
         SUM(responses) as total_responses,
         SUM(sale) as total_sales,
@@ -281,22 +386,126 @@ app.get('/api/weekly-trend', async (req, res) => {
     }
     if (start_date) {
       params.push(start_date);
-      query += ` AND week_of >= $${params.length}`;
+      query += ` AND date >= $${params.length}`;
     }
     if (end_date) {
       params.push(end_date);
-      query += ` AND week_of <= $${params.length}`;
+      query += ` AND date <= $${params.length}`;
     }
 
     query += `
-      GROUP BY week_of
-      ORDER BY week_of
+      GROUP BY date
+      ORDER BY date
     `;
 
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
-    console.error('Weekly trend error:', error);
+    console.error('Daily trend error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get station details (clearance, best daypart, best creative, CPM)
+app.get('/api/station-details/:station', async (req, res) => {
+  try {
+    const { station } = req.params;
+    const { client, start_date, end_date } = req.query;
+
+    const params = [station];
+    let whereClause = 'WHERE mg.station = $1';
+
+    if (client) {
+      params.push(client);
+      whereClause += ` AND mg.client_name = $${params.length}`;
+    }
+    if (start_date) {
+      params.push(start_date);
+      whereClause += ` AND mg.date >= $${params.length}`;
+    }
+    if (end_date) {
+      params.push(end_date);
+      whereClause += ` AND mg.date <= $${params.length}`;
+    }
+
+    // Get master grain aggregates
+    const masterGrainQuery = `
+      SELECT
+        SUM(cost) as total_cost,
+        SUM(impressions) as total_impressions,
+        SUM(responses) as total_responses,
+        SUM(sale) as total_sales,
+        CASE WHEN SUM(impressions) > 0 THEN (SUM(cost) / SUM(impressions)) * 1000 ELSE NULL END as cpm
+      FROM mynt.fact_master_grain mg
+      ${whereClause}
+    `;
+
+    // Get best daypart
+    const bestDaypartQuery = `
+      SELECT
+        daypart,
+        SUM(sale) as total_sales,
+        SUM(cost) as total_cost,
+        CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale
+      FROM mynt.fact_master_grain mg
+      ${whereClause}
+      GROUP BY daypart
+      ORDER BY total_sales DESC
+      LIMIT 1
+    `;
+
+    // Get best creative
+    const bestCreativeQuery = `
+      SELECT
+        creative,
+        SUM(sale) as total_sales,
+        SUM(cost) as total_cost,
+        CASE WHEN SUM(sale) > 0 THEN SUM(cost) / SUM(sale) ELSE NULL END as cost_per_sale
+      FROM mynt.fact_master_grain mg
+      ${whereClause}
+      GROUP BY creative
+      ORDER BY total_sales DESC
+      LIMIT 1
+    `;
+
+    // Get clearance data (if available)
+    let clearanceQuery = `
+      SELECT
+        SUM(booked_cf) as total_booked_cf,
+        SUM(cleared_cf) as total_cleared_cf,
+        SUM(spots_ran) as total_spots_ran,
+        SUM(ord_spots) as total_ord_spots,
+        CASE WHEN SUM(booked_cf) > 0 THEN SUM(cleared_cf) / SUM(booked_cf) ELSE NULL END as clearance_pct
+      FROM mynt.fact_clearance
+      WHERE TRIM(station) = $1
+    `;
+
+    const clearanceParams = [station];
+    if (start_date) {
+      clearanceParams.push(start_date);
+      clearanceQuery += ` AND week_of >= $${clearanceParams.length}`;
+    }
+    if (end_date) {
+      clearanceParams.push(end_date);
+      clearanceQuery += ` AND week_of <= $${clearanceParams.length}`;
+    }
+
+    const [masterGrain, bestDaypart, bestCreative, clearance] = await Promise.all([
+      pool.query(masterGrainQuery, params),
+      pool.query(bestDaypartQuery, params),
+      pool.query(bestCreativeQuery, params),
+      pool.query(clearanceQuery, clearanceParams)
+    ]);
+
+    res.json({
+      station,
+      metrics: masterGrain.rows[0],
+      best_daypart: bestDaypart.rows[0] || null,
+      best_creative: bestCreative.rows[0] || null,
+      clearance: clearance.rows[0] || null
+    });
+  } catch (error) {
+    console.error('Station details error:', error);
     res.status(500).json({ error: error.message });
   }
 });
