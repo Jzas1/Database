@@ -7,9 +7,6 @@
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '../../.env' }); // Load from main project .env
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
@@ -516,12 +513,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✓ API server running on http://localhost:${PORT}`);
-  console.log(`✓ Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
-  console.log(`✓ Health check: http://localhost:${PORT}/health`);
-});
+// Start server (for local development)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`✓ API server running on http://localhost:${PORT}`);
+    console.log(`✓ Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+    console.log(`✓ Health check: http://localhost:${PORT}/health`);
+  });
+}
+
+// Export for Vercel serverless
+export default app;
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
