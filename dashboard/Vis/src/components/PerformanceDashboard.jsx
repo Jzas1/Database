@@ -21,7 +21,7 @@ import {
   ReferenceArea,
 } from "recharts";
 
-const API_BASE = "https://api-j82jh1pvm-joseph-zasiebidas-projects.vercel.app/api";
+const API_BASE = "/api/data";
 
 // ---------- helpers ----------
 const fmtInt = (n) => {
@@ -161,7 +161,7 @@ export default function PerformanceDashboard() {
 
         console.log('Fetching custom breakdown with params:', params.toString());
 
-        const res = await fetch(`${API_BASE}/custom-breakdown?${params}`);
+        const res = await fetch(`${API_BASE}?endpoint=custom-breakdown&${params}`);
         const data = await res.json();
         console.log('Custom breakdown data received:', data.length, 'rows');
         setBreakdownData(data);
@@ -176,8 +176,8 @@ export default function PerformanceDashboard() {
     (async () => {
       try {
         const [clientsRes, rangeRes] = await Promise.all([
-          fetch(`${API_BASE}/clients`),
-          fetch(`${API_BASE}/date-range`)
+          fetch(`${API_BASE}?endpoint=clients`),
+          fetch(`${API_BASE}?endpoint=date-range`)
         ]);
 
         const clientsData = await clientsRes.json();
@@ -211,12 +211,12 @@ export default function PerformanceDashboard() {
         console.log("Fetching with params:", params.toString());
 
         const [kpisRes, stationRes, daypartRes, stationDaypartRes, trendRes, creativeRes] = await Promise.all([
-          fetch(`${API_BASE}/kpis?${params}`),
-          fetch(`${API_BASE}/station-performance?${params}`),
-          fetch(`${API_BASE}/daypart-performance?${params}`),
-          fetch(`${API_BASE}/station-by-daypart?${params}`),
-          fetch(`${API_BASE}/daily-trend?${params}`),
-          fetch(`${API_BASE}/creative-performance?${params}`)
+          fetch(`${API_BASE}?endpoint=kpis&${params}`),
+          fetch(`${API_BASE}?endpoint=station-performance&${params}`),
+          fetch(`${API_BASE}?endpoint=daypart-performance&${params}`),
+          fetch(`${API_BASE}?endpoint=station-by-daypart&${params}`),
+          fetch(`${API_BASE}?endpoint=daily-trend&${params}`),
+          fetch(`${API_BASE}?endpoint=creative-performance&${params}`)
         ]);
 
         const [kpisData, stationDataRaw, daypartDataRaw, stationDaypartDataRaw, trendDataRaw, creativeDataRaw] = await Promise.all([
@@ -258,9 +258,11 @@ export default function PerformanceDashboard() {
           ...(endDate && { end_date: endDate })
         });
 
-        const res = await fetch(`${API_BASE}/station-details/${encodeURIComponent(selectedStation)}?${params}`);
-        const data = await res.json();
-        setStationDetails(data);
+        // Station details endpoint not implemented for Google Sheets yet
+        // const res = await fetch(`${API_BASE}?endpoint=station-details&station=${encodeURIComponent(selectedStation)}&${params}`);
+        // const data = await res.json();
+        // setStationDetails(data);
+        setStationDetails(null);
       } catch (e) {
         console.error("Failed to load station details:", e);
       } finally {
