@@ -38,18 +38,18 @@ export default function MedellinLinkSite() {
   const NavLink = ({ href, children }) => (
     <a
       href={href}
-      className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-lg"
+      className="px-3 py-2 text-sm font-medium text-charcoal hover:text-teal focus:outline-none focus:ring-2 focus:ring-teal rounded-lg"
     >
       {children}
     </a>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-white to-lavender/20 text-charcoal">
       <SiteStyle />
 
       {/* NAVBAR */}
-      <header className="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-slate-200">
+      <header className="sticky top-0 z-40 backdrop-blur bg-white/90 border-b border-lavender">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           <a href="#home" className="flex items-center gap-2 group">
             <Logo className="h-7 w-7" />
@@ -58,22 +58,20 @@ export default function MedellinLinkSite() {
           <nav className="hidden md:flex items-center">
             <NavLink href="#services">{L.nav.services}</NavLink>
             <NavLink href="#how">{L.nav.how}</NavLink>
-            <NavLink href="#cities">{L.nav.cities}</NavLink>
-            <NavLink href="#pricing">{L.nav.pricing}</NavLink>
             <NavLink href="#faq">{L.nav.faq}</NavLink>
             <NavLink href="#contact">{L.nav.contact}</NavLink>
           </nav>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setLang((p) => (p === "en" ? "es" : "en"))}
-              className="hidden sm:inline-flex text-sm px-3 py-2 rounded-xl border border-slate-300 hover:border-emerald-400 hover:text-emerald-700"
+              className="hidden sm:inline-flex text-sm px-3 py-2 rounded-xl border border-lavender hover:border-teal hover:text-teal"
               aria-label="Toggle language"
             >
               {lang === "en" ? "ES" : "EN"}
             </button>
             <button
               onClick={() => openWhatsApp()}
-              className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow"
+              className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl bg-teal text-white hover:bg-teal/90 shadow"
             >
               <WhatsAppIcon className="h-4 w-4" /> {L.cta.whatsapp}
             </button>
@@ -89,30 +87,30 @@ export default function MedellinLinkSite() {
             <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
               {L.hero.title}
             </h1>
-            <p className="mt-4 text-lg text-slate-700">
+            <p className="mt-4 text-lg text-charcoal/80">
               {L.hero.sub}
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => openWhatsApp()}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-teal text-white hover:bg-teal/90 shadow-md"
               >
                 <WhatsAppIcon className="h-5 w-5" /> {L.cta.whatsapp}
               </button>
               <a
                 href="#services"
-                className="px-5 py-3 rounded-2xl border border-slate-300 hover:border-slate-400"
+                className="px-5 py-3 rounded-2xl border border-lavender hover:border-teal hover:text-teal"
               >
                 {L.cta.learn}
               </a>
             </div>
-            <div className="mt-6 flex flex-wrap gap-2 text-sm text-slate-600">
+            <div className="mt-6 flex flex-wrap gap-2 text-sm text-charcoal">
               <Badge>{L.hero.badges.bilingual}</Badge>
               <Badge>{L.hero.badges.local}</Badge>
               <Badge>{L.hero.badges.transparent}</Badge>
               <Badge>{L.hero.badges.womenLed}</Badge>
             </div>
-            <p className="mt-6 text-xs text-slate-500">{L.disclaimer}</p>
+            <p className="mt-6 text-xs text-charcoal/60">{L.disclaimer}</p>
           </div>
           <div data-reveal className="translate-y-6 opacity-0">
             <HeroCard lang={lang} />
@@ -125,7 +123,7 @@ export default function MedellinLinkSite() {
         <h2 data-reveal className="translate-y-6 opacity-0 text-2xl md:text-4xl font-extrabold tracking-tight">
           {L.services.title}
         </h2>
-        <p data-reveal className="translate-y-6 opacity-0 mt-2 text-slate-700 max-w-2xl">
+        <p data-reveal className="translate-y-6 opacity-0 mt-2 text-charcoal/80 max-w-2xl">
           {L.services.sub}
         </p>
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,7 +134,7 @@ export default function MedellinLinkSite() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="bg-white border-y border-slate-200">
+      <section id="how" className="bg-sage/10 border-y border-lavender">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <h2 data-reveal className="translate-y-6 opacity-0 text-2xl md:text-4xl font-extrabold tracking-tight">
             {L.how.title}
@@ -146,52 +144,18 @@ export default function MedellinLinkSite() {
               <li
                 key={i}
                 data-reveal
-                className="translate-y-6 opacity-0 bg-slate-50 rounded-2xl border border-slate-200 p-6 shadow-sm"
+                className="translate-y-6 opacity-0 bg-white rounded-2xl border border-lavender p-6 shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <span className="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-emerald-100 font-bold text-emerald-700">
+                  <span className="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-orange/20 font-bold text-orange">
                     {i + 1}
                   </span>
                   <h3 className="text-lg font-bold">{step.title}</h3>
                 </div>
-                <p className="mt-3 text-slate-700">{step.body}</p>
+                <p className="mt-3 text-charcoal/80">{step.body}</p>
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      {/* CITIES */}
-      <section id="cities" className="mx-auto max-w-6xl px-4 py-16">
-        <h2 data-reveal className="translate-y-6 opacity-0 text-2xl md:text-4xl font-extrabold tracking-tight">
-          {L.cities.title}
-        </h2>
-        <p className="mt-2 text-slate-700 max-w-2xl" data-reveal>
-          {L.cities.sub}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          {L.cities.list.map((c, i) => (
-            <span key={i} className="px-4 py-2 rounded-2xl border border-slate-300 bg-white shadow-sm" data-reveal>
-              {c}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section id="pricing" className="bg-white border-y border-slate-200">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 data-reveal className="translate-y-6 opacity-0 text-2xl md:text-4xl font-extrabold tracking-tight">
-            {L.pricing.title}
-          </h2>
-          <p className="mt-2 text-slate-700 max-w-2xl" data-reveal>
-            {L.pricing.sub}
-          </p>
-          <div className="mt-8 grid md:grid-cols-3 gap-6">
-            {L.pricing.plans.map((p, i) => (
-              <PricingCard key={i} {...p} onClick={() => openWhatsApp(p.prefill)} />
-            ))}
-          </div>
         </div>
       </section>
 
@@ -202,32 +166,32 @@ export default function MedellinLinkSite() {
         </h2>
         <div className="mt-6 grid md:grid-cols-2 gap-6">
           {L.faq.qas.map((qa, i) => (
-            <details key={i} className="group border border-slate-200 rounded-2xl p-5 bg-white shadow-sm" data-reveal>
+            <details key={i} className="group border border-lavender rounded-2xl p-5 bg-white shadow-sm hover:border-teal transition-colors" data-reveal>
               <summary className="cursor-pointer list-none flex items-center justify-between font-semibold">
                 {qa.q}
-                <span className="ml-4 inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-slate-500 group-open:rotate-45 transition">
+                <span className="ml-4 inline-flex h-6 w-6 items-center justify-center rounded-full border border-lavender text-teal group-open:rotate-45 transition">
                   +
                 </span>
               </summary>
-              <p className="mt-3 text-slate-700">{qa.a}</p>
+              <p className="mt-3 text-charcoal/80">{qa.a}</p>
             </details>
           ))}
         </div>
       </section>
 
       {/* CONTACT */}
-      <section id="contact" className="bg-white border-t border-slate-200">
+      <section id="contact" className="bg-white border-t border-lavender">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="grid md:grid-cols-2 gap-10 items-start">
             <div data-reveal className="translate-y-6 opacity-0">
               <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight">{L.contact.title}</h2>
-              <p className="mt-2 text-slate-700 max-w-prose">{L.contact.sub}</p>
+              <p className="mt-2 text-charcoal/80 max-w-prose">{L.contact.sub}</p>
               <div className="mt-6 space-y-3 text-sm">
-                <div className="flex items-center gap-2"><WhatsAppIcon className="h-4 w-4" /><button onClick={() => openWhatsApp()} className="underline underline-offset-4 decoration-emerald-500 hover:text-emerald-700">{L.contact.whatsapp}</button></div>
-                <div className="flex items-center gap-2"><PhoneIcon className="h-4 w-4" /><span>{L.contact.phoneLabel}: <a className="hover:underline" href={`tel:+${WHATSAPP_NUMBER}`}>+{WHATSAPP_NUMBER}</a></span></div>
-                <div className="flex items-center gap-2"><MailIcon className="h-4 w-4" /><a className="hover:underline" href="mailto:hello@medellin.link">hello@medellin.link</a></div>
+                <div className="flex items-center gap-2 text-teal"><WhatsAppIcon className="h-4 w-4" /><button onClick={() => openWhatsApp()} className="underline underline-offset-4 decoration-teal hover:text-teal/80">{L.contact.whatsapp}</button></div>
+                <div className="flex items-center gap-2"><PhoneIcon className="h-4 w-4" /><span>{L.contact.phoneLabel}: <a className="hover:underline hover:text-teal" href={`tel:+${WHATSAPP_NUMBER}`}>+{WHATSAPP_NUMBER}</a></span></div>
+                <div className="flex items-center gap-2"><MailIcon className="h-4 w-4" /><a className="hover:underline hover:text-teal" href="mailto:hello@medellin.link">hello@medellin.link</a></div>
               </div>
-              <p className="mt-6 text-xs text-slate-500">{L.disclaimer}</p>
+              <p className="mt-6 text-xs text-charcoal/60">{L.disclaimer}</p>
             </div>
             <ContactForm L={L} openWhatsApp={openWhatsApp} />
           </div>
@@ -235,13 +199,13 @@ export default function MedellinLinkSite() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-slate-200">
+      <footer className="border-t border-lavender bg-sage/5">
         <div className="mx-auto max-w-6xl px-4 py-10 text-sm flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 opacity-80"><Logo className="h-5 w-5" /><span>{BRAND}</span></div>
-          <p className="text-slate-500">© {new Date().getFullYear()} {BRAND}. {L.footer.rights}</p>
-          <div className="flex items-center gap-4 text-slate-500">
-            <a href="#privacy" className="hover:text-slate-800">{L.footer.privacy}</a>
-            <a href="#terms" className="hover:text-slate-800">{L.footer.terms}</a>
+          <p className="text-charcoal/60">© {new Date().getFullYear()} {BRAND}. {L.footer.rights}</p>
+          <div className="flex items-center gap-4 text-charcoal/60">
+            <a href="#privacy" className="hover:text-teal">{L.footer.privacy}</a>
+            <a href="#terms" className="hover:text-teal">{L.footer.terms}</a>
           </div>
         </div>
       </footer>
@@ -250,7 +214,7 @@ export default function MedellinLinkSite() {
       <button
         onClick={() => openWhatsApp()}
         aria-label="WhatsApp"
-        className="fixed bottom-5 right-5 md:bottom-6 md:right-6 h-12 w-12 rounded-full shadow-lg bg-emerald-600 hover:bg-emerald-700 text-white grid place-items-center"
+        className="fixed bottom-5 right-5 md:bottom-6 md:right-6 h-12 w-12 rounded-full shadow-lg bg-teal hover:bg-teal/90 text-white grid place-items-center"
       >
         <WhatsAppIcon className="h-5 w-5" />
       </button>
@@ -321,6 +285,7 @@ const en = {
     qas: [
       { q: "Are you a medical provider?", a: "No. We are a local concierge/guide service. We help you navigate options, schedule, translate, and accompany you." },
       { q: "Do clinics speak English?", a: "We prioritize English-friendly doctors. We also provide translation in-person and over the phone." },
+      { q: "Where do you operate?", a: "Medellín." },
       { q: "Can you help with visas?", a: "Yes—guidance on the process and paperwork. We are not an immigration law firm." },
       { q: "Airport pickup?", a: "Yes—safe transportation from José María Córdova (MDE) or Olaya Herrera (EOH)." },
       { q: "Emergency support?", a: "For emergencies in Colombia, call 123. We do not provide emergency medical care." },
@@ -407,6 +372,7 @@ const es = {
     qas: [
       { q: "¿Son un proveedor médico?", a: "No. Somos un servicio local de concierge/guía. Te ayudamos a navegar opciones, agendar, traducir y acompañar." },
       { q: "¿Las clínicas hablan inglés?", a: "Priorizamos doctores con inglés. Además brindamos traducción presencial y telefónica." },
+      { q: "¿Dónde operan?", a: "Medellín." },
       { q: "¿Pueden ayudar con visas?", a: "Sí—orientación sobre el proceso y documentos. No somos una firma de inmigración." },
       { q: "¿Recogida en aeropuerto?", a: "Sí—transporte seguro desde José María Córdova (MDE) u Olaya Herrera (EOH)." },
       { q: "¿Soporte en emergencias?", a: "Para emergencias en Colombia, llama al 123. No brindamos atención médica de emergencia." },
@@ -446,8 +412,8 @@ function SiteStyle() {
 function BackgroundGrid() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-      <div className="absolute inset-0 bg-[radial-gradient(1000px_500px_at_80%_-20%,rgba(16,185,129,.15),transparent),radial-gradient(800px_400px_at_0%_120%,rgba(59,130,246,.12),transparent)]" />
-      <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+      <div className="absolute inset-0 bg-[radial-gradient(1000px_500px_at_80%_-20%,rgba(1,121,115,.12),transparent),radial-gradient(800px_400px_at_0%_120%,rgba(192,214,132,.1),transparent)]" />
+      <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
             <path d="M 32 0 L 0 0 0 32" fill="none" stroke="currentColor" strokeWidth="1" />
@@ -464,19 +430,19 @@ function Logo({ className = "h-6 w-6" }) {
     <svg viewBox="0 0 24 24" className={className}>
       <defs>
         <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#10b981" />
-          <stop offset="100%" stopColor="#3b82f6" />
+          <stop offset="0%" stopColor="#017973" />
+          <stop offset="100%" stopColor="#C0D684" />
         </linearGradient>
       </defs>
       <circle cx="12" cy="12" r="10" fill="url(#g)" opacity="0.2" />
-      <path d="M6 12h12M12 6v12" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+      <path d="M6 12h12M12 6v12" stroke="#017973" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
 
 function Badge({ children }) {
   return (
-    <span className="px-3 py-1 rounded-full border border-slate-300 bg-white text-xs shadow-sm">
+    <span className="px-3 py-1 rounded-full border border-lavender bg-white text-xs shadow-sm">
       {children}
     </span>
   );
@@ -486,38 +452,38 @@ function ServiceCard({ icon: Icon, title, body, primary }) {
   return (
     <article
       data-reveal
-      className={`translate-y-6 opacity-0 rounded-2xl border p-6 shadow-sm bg-white ${
-        primary ? "border-emerald-300" : "border-slate-200"
+      className={`translate-y-6 opacity-0 rounded-2xl border p-6 shadow-sm bg-white hover:border-teal transition-colors ${
+        primary ? "border-teal" : "border-lavender"
       }`}
     >
       <div className="flex items-center gap-3">
         <span className={`h-10 w-10 grid place-items-center rounded-xl ${
-          primary ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"
+          primary ? "bg-teal/20 text-teal" : "bg-sage/20 text-charcoal"
         }`}>
           <Icon className="h-5 w-5" />
         </span>
         <h3 className="text-lg font-bold">{title}</h3>
       </div>
-      <p className="mt-3 text-slate-700">{body}</p>
+      <p className="mt-3 text-charcoal/80">{body}</p>
     </article>
   );
 }
 
 function PricingCard({ name, price, features, cta, prefill, onClick }) {
   return (
-    <article data-reveal className="translate-y-6 opacity-0 rounded-2xl border border-slate-200 p-6 bg-white shadow-sm flex flex-col">
+    <article data-reveal className="translate-y-6 opacity-0 rounded-2xl border border-lavender p-6 bg-white shadow-sm flex flex-col hover:border-teal transition-colors">
       <h3 className="text-xl font-extrabold">{name}</h3>
-      <div className="mt-2 text-3xl font-black tracking-tight">{price}</div>
-      <ul className="mt-4 space-y-2 text-slate-700">
+      <div className="mt-2 text-3xl font-black tracking-tight text-orange">{price}</div>
+      <ul className="mt-4 space-y-2 text-charcoal/80">
         {features.map((f, i) => (
           <li key={i} className="flex items-start gap-2">
-            <CheckIcon className="mt-1 h-4 w-4 text-emerald-600" /> <span>{f}</span>
+            <CheckIcon className="mt-1 h-4 w-4 text-teal" /> <span>{f}</span>
           </li>
         ))}
       </ul>
       <button
         onClick={() => onClick(prefill)}
-        className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+        className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-teal text-white hover:bg-teal/90"
       >
         <WhatsAppIcon className="h-4 w-4" /> {cta}
       </button>
@@ -543,25 +509,25 @@ function ContactForm({ L, openWhatsApp }) {
       <div className="grid grid-cols-1 gap-4">
         <label className="block">
           <span className="text-sm font-medium">{L.contact.form.name}</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" />
+          <input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full rounded-xl border border-lavender px-3 py-2 focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none" />
         </label>
         <label className="block">
           <span className="text-sm font-medium">{L.contact.form.email}</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 w-full rounded-xl border border-lavender px-3 py-2 focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none" />
         </label>
         <label className="block">
           <span className="text-sm font-medium">{L.contact.form.dates}</span>
-          <input value={dates} onChange={(e) => setDates(e.target.value)} placeholder="2025-11-02 → 2025-11-07" className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" />
+          <input value={dates} onChange={(e) => setDates(e.target.value)} placeholder="2025-11-02 → 2025-11-07" className="mt-1 w-full rounded-xl border border-lavender px-3 py-2 focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none" />
         </label>
         <label className="block">
           <span className="text-sm font-medium">{L.contact.form.city}</span>
-          <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" />
+          <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-xl border border-lavender px-3 py-2 focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none" />
         </label>
         <label className="block">
           <span className="text-sm font-medium">{L.contact.form.need}</span>
-          <textarea value={need} onChange={(e) => setNeed(e.target.value)} rows={5} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" />
+          <textarea value={need} onChange={(e) => setNeed(e.target.value)} rows={5} className="mt-1 w-full rounded-xl border border-lavender px-3 py-2 focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none" />
         </label>
-        <button type="submit" className="mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700">
+        <button type="submit" className="mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-teal text-white hover:bg-teal/90">
           <WhatsAppIcon className="h-5 w-5" /> {L.contact.form.send}
         </button>
       </div>
@@ -578,16 +544,16 @@ function HeroCard({ lang }) {
     { icon: VisaIcon, en: "Visa guidance", es: "Asesoría de visado" },
   ];
   return (
-    <div className="bg-white/70 backdrop-blur rounded-3xl border border-slate-200 p-6 md:p-8 shadow-lg">
+    <div className="bg-white/70 backdrop-blur rounded-3xl border border-lavender p-6 md:p-8 shadow-lg">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {items.map((it, i) => (
-          <div key={i} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 bg-white">
-            <it.icon className="h-5 w-5 text-emerald-600" />
+          <div key={i} className="flex items-center gap-3 p-3 rounded-2xl border border-lavender bg-white">
+            <it.icon className="h-5 w-5 text-teal" />
             <span className="text-sm font-medium">{lang === "en" ? it.en : it.es}</span>
           </div>
         ))}
       </div>
-      <div className="mt-6 text-sm text-slate-600">
+      <div className="mt-6 text-sm text-charcoal/70">
         <p>{lang === "en" ? "Health tourism focus. Also tours, translation, visas, and safe travel." : "Enfoque en turismo de salud. También tours, traducción, visas y viaje seguro."}</p>
       </div>
     </div>
