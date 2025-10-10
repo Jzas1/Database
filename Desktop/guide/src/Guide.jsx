@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // --- Quick setup notes -------------------------------------------------------
 // 1) Replace WHATSAPP_NUMBER with your WhatsApp number in international format (no +).
@@ -7,12 +7,11 @@ import React, { useEffect, useMemo, useState } from "react";
 // 3) This is a single-file React component with Tailwind classes. Drop into Vite/CRA.
 // 4) No external UI libs required.
 
-const WHATSAPP_NUMBER = "573001112233"; // TODO: set to real number
-const BRAND = "MedellínLink"; // or "MedellinLink" if you prefer no accent
+const WHATSAPP_NUMBER = "573196133848";
+const BRAND = "Guide Medellin";
 
 export default function MedellinLinkSite() {
-  const [lang, setLang] = useState("en");
-  const L = useMemo(() => (lang === "es" ? es : en), [lang]);
+  const L = en;
 
   useEffect(() => {
     // Simple scroll-reveal
@@ -63,13 +62,6 @@ export default function MedellinLinkSite() {
           </nav>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setLang((p) => (p === "en" ? "es" : "en"))}
-              className="hidden sm:inline-flex text-sm px-3 py-2 rounded-xl border border-lavender hover:border-teal hover:text-teal"
-              aria-label="Toggle language"
-            >
-              {lang === "en" ? "ES" : "EN"}
-            </button>
-            <button
               onClick={() => openWhatsApp()}
               className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl bg-teal text-white hover:bg-teal/90 shadow"
             >
@@ -113,7 +105,7 @@ export default function MedellinLinkSite() {
             <p className="mt-6 text-xs text-charcoal/60">{L.disclaimer}</p>
           </div>
           <div data-reveal className="translate-y-6 opacity-0">
-            <HeroCard lang={lang} />
+            <HeroCard />
           </div>
         </div>
       </section>
@@ -189,7 +181,7 @@ export default function MedellinLinkSite() {
               <div className="mt-6 space-y-3 text-sm">
                 <div className="flex items-center gap-2 text-teal"><WhatsAppIcon className="h-4 w-4" /><button onClick={() => openWhatsApp()} className="underline underline-offset-4 decoration-teal hover:text-teal/80">{L.contact.whatsapp}</button></div>
                 <div className="flex items-center gap-2"><PhoneIcon className="h-4 w-4" /><span>{L.contact.phoneLabel}: <a className="hover:underline hover:text-teal" href={`tel:+${WHATSAPP_NUMBER}`}>+{WHATSAPP_NUMBER}</a></span></div>
-                <div className="flex items-center gap-2"><MailIcon className="h-4 w-4" /><a className="hover:underline hover:text-teal" href="mailto:hello@medellin.link">hello@medellin.link</a></div>
+                <div className="flex items-center gap-2"><MailIcon className="h-4 w-4" /><a className="hover:underline hover:text-teal" href="mailto:dannab@guidemedellin.com">dannab@guidemedellin.com</a></div>
               </div>
               <p className="mt-6 text-xs text-charcoal/60">{L.disclaimer}</p>
             </div>
@@ -307,95 +299,9 @@ const en = {
   },
   disclaimer: "We are not a healthcare provider and do not offer medical advice. For emergencies in Colombia, call 123.",
   footer: { rights: "All rights reserved.", privacy: "Privacy", terms: "Terms" },
-  whatsappPrefill: "Hi! I found you on MedellínLink. I need help with doctors/translation/travel in Medellín.",
+  whatsappPrefill: "Hi! I found you on Guide Medellin. I need help with doctors/translation/travel in Medellín.",
 };
 
-const es = {
-  nav: { services: "Servicios", how: "Cómo funciona", cities: "Ciudades", pricing: "Precios", faq: "FAQ", contact: "Contacto" },
-  cta: { whatsapp: "WhatsApp ahora", learn: "Ver servicios" },
-  hero: {
-    title: "Ayuda local en Medellín: doctores confiables, turismo de salud y traducción.",
-    sub: "Especialistas en navegación médica y turismo de salud. También hacemos recogida en el aeropuerto, traducción, asesoría de visado, tours y viaje seguro.",
-    badges: {
-      bilingual: "Bilingüe (ES/EN)",
-      local: "Experiencia local",
-      transparent: "Precios transparentes",
-      womenLed: "Liderado por mujeres"
-    }
-  },
-  services: {
-    title: "Qué hacemos",
-    sub: "Acompañamiento integral para visitantes y expatriados. No somos un proveedor de salud; te conectamos con clínicas confiables y te acompañamos en todo el proceso.",
-  },
-  how: {
-    title: "Cómo funciona",
-    steps: [
-      { title: "Cuéntanos qué necesitas", body: "Comparte tus fechas, idioma y lo que buscas (especialidad médica, tour, trámites)." },
-      { title: "Te proponemos opciones", body: "Enviamos clínicas/proveedores verificados, horarios y costos. Tú eliges." },
-      { title: "Te guiamos de principio a fin", body: "Agenda, formularios, traducción presencial, transporte y seguimiento." },
-    ],
-  },
-  cities: {
-    title: "Dónde operamos",
-    sub: "Base en Medellín. También podemos apoyarte en otras ciudades de Colombia bajo solicitud.",
-    list: ["Medellín (principal)", "Bogotá", "Cartagena"],
-  },
-  pricing: {
-    title: "Paquetes simples",
-    sub: "Puntos de partida transparentes—escríbenos por WhatsApp para una cotización a medida.",
-    plans: [
-      {
-        name: "Inicial",
-        price: "desde $79",
-        features: ["Consulta de 15 min", "Lista corta de clínicas/proveedores", "Soporte por WhatsApp (horario laboral)"] ,
-        cta: "Elegir Inicial",
-        prefill: "¡Hola! Me interesa el paquete Inicial. Mis fechas son … y necesito ayuda con …",
-      },
-      {
-        name: "Plus",
-        price: "desde $199",
-        features: ["Todo Inicial", "Agendamiento + ayuda con formularios", "Traducción presencial hasta 3h"],
-        cta: "Elegir Plus",
-        prefill: "¡Hola! Quiero el paquete Plus (agendamiento + traducción). Mis fechas son … y necesito …",
-      },
-      {
-        name: "Conserje",
-        price: "desde $399",
-        features: ["Todo Plus", "Acompañamiento puerta a puerta", "Seguimiento al día siguiente"],
-        cta: "Elegir Conserje",
-        prefill: "¡Hola! Me interesa Conserje. Por favor ayúdenme con acompañamiento puerta a puerta y seguimiento.",
-      },
-    ],
-  },
-  faq: {
-    title: "Preguntas frecuentes",
-    qas: [
-      { q: "¿Son un proveedor médico?", a: "No. Somos un servicio local de concierge/guía. Te ayudamos a navegar opciones, agendar, traducir y acompañar." },
-      { q: "¿Las clínicas hablan inglés?", a: "Priorizamos doctores con inglés. Además brindamos traducción presencial y telefónica." },
-      { q: "¿Dónde operan?", a: "Medellín." },
-      { q: "¿Pueden ayudar con visas?", a: "Sí—orientación sobre el proceso y documentos. No somos una firma de inmigración." },
-      { q: "¿Recogida en aeropuerto?", a: "Sí—transporte seguro desde José María Córdova (MDE) u Olaya Herrera (EOH)." },
-      { q: "¿Soporte en emergencias?", a: "Para emergencias en Colombia, llama al 123. No brindamos atención médica de emergencia." },
-    ],
-  },
-  contact: {
-    title: "Habla con una local",
-    sub: "Cuéntanos tus fechas, ciudad y necesidad. Respondemos rápido por WhatsApp.",
-    whatsapp: "Abrir WhatsApp",
-    phoneLabel: "Llamar",
-    form: {
-      name: "Nombre",
-      email: "Correo",
-      dates: "Fechas",
-      city: "Ciudad",
-      need: "¿Qué necesitas?",
-      send: "Enviar por WhatsApp",
-    },
-  },
-  disclaimer: "No somos un proveedor de salud ni damos consejo médico. Para emergencias en Colombia, llama al 123.",
-  footer: { rights: "Todos los derechos reservados.", privacy: "Privacidad", terms: "Términos" },
-  whatsappPrefill: "¡Hola! Los encontré en MedellínLink. Necesito ayuda con doctores/traducción/viaje en Medellín.",
-};
 
 // ---------------------------- Components ------------------------------------
 function SiteStyle() {
@@ -535,13 +441,13 @@ function ContactForm({ L, openWhatsApp }) {
   );
 }
 
-function HeroCard({ lang }) {
+function HeroCard() {
   const items = [
-    { icon: StethoscopeIcon, en: "Trusted doctors", es: "Doctores confiables" },
-    { icon: TranslateIcon, en: "Translation on-site", es: "Traducción presencial" },
-    { icon: PlaneIcon, en: "Airport pickup", es: "Recogida en aeropuerto" },
-    { icon: ShieldIcon, en: "Safe travel routes", es: "Rutas seguras" },
-    { icon: VisaIcon, en: "Visa guidance", es: "Asesoría de visado" },
+    { icon: StethoscopeIcon, title: "Trusted doctors" },
+    { icon: TranslateIcon, title: "Translation on-site" },
+    { icon: PlaneIcon, title: "Airport pickup" },
+    { icon: ShieldIcon, title: "Safe travel routes" },
+    { icon: VisaIcon, title: "Visa guidance" },
   ];
   return (
     <div className="bg-white/70 backdrop-blur rounded-3xl border border-lavender p-6 md:p-8 shadow-lg">
@@ -549,12 +455,12 @@ function HeroCard({ lang }) {
         {items.map((it, i) => (
           <div key={i} className="flex items-center gap-3 p-3 rounded-2xl border border-lavender bg-white">
             <it.icon className="h-5 w-5 text-teal" />
-            <span className="text-sm font-medium">{lang === "en" ? it.en : it.es}</span>
+            <span className="text-sm font-medium">{it.title}</span>
           </div>
         ))}
       </div>
       <div className="mt-6 text-sm text-charcoal/70">
-        <p>{lang === "en" ? "Health tourism focus. Also tours, translation, visas, and safe travel." : "Enfoque en turismo de salud. También tours, traducción, visas y viaje seguro."}</p>
+        <p>Health tourism focus. Also tours, translation, visas, and safe travel.</p>
       </div>
     </div>
   );
