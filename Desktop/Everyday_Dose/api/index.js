@@ -129,4 +129,24 @@ app.get('/api/sheet-data', async (req, res) => {
   }
 });
 
-export default app;
+// Vercel serverless function handler
+export default async function handler(req, res) {
+  // Set CORS headers for Vercel
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Cookie');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Process with Express app
+  return new Promise((resolve, reject) => {
+    app(req, res, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
