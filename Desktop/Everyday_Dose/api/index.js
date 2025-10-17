@@ -1,9 +1,10 @@
 import express from 'express';
-import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import { google } from 'googleapis';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,11 +14,15 @@ const app = express();
 // IMPORTANT: Change this password to your desired password
 const DASHBOARD_PASSWORD = 'mynt2025';
 
+// Secret for signing cookies
+const COOKIE_SECRET = process.env.COOKIE_SECRET || 'everyday-dose-secret-key-change-in-production';
+
 // Google Sheets Configuration
 const SHEET_ID = '1F99B8A4BUH4KIBfmyZgXzMxaFuIBQ3REaZJVgRYEttw';
 const SHEET_NAME = 'Delivery Data';
 
 app.use(express.json());
+app.use(cookieParser(COOKIE_SECRET));
 
 // Serve static files
 app.use('/videos', express.static(path.join(__dirname, '../'), {
@@ -42,21 +47,14 @@ app.use('/images', express.static(path.join(__dirname, '../'), {
   }
 }));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'your-session-secret-key-change-me',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    },
-  })
-);
+// Helper function to check if user is authenticated via cookie
+function isAuthenticated(req) {
+  return req.signedCookies.auth === 'authenticated';
+}
 
 // Check auth status
 app.get('/api/auth', (req, res) => {
-  res.json({ authenticated: req.session.authenticated || false });
+  res.json({ authenticated: isAuthenticated(req) });
 });
 
 // Login endpoint
@@ -64,7 +62,14 @@ app.post('/api/auth', (req, res) => {
   const { password } = req.body;
 
   if (password === DASHBOARD_PASSWORD) {
-    req.session.authenticated = true;
+    // Set signed cookie that lasts 24 hours
+    res.cookie('auth', 'authenticated', {
+      signed: true,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
     res.json({ success: true });
   } else {
     res.status(401).json({ success: false, message: 'Invalid password' });
@@ -73,7 +78,7 @@ app.post('/api/auth', (req, res) => {
 
 // Logout endpoint
 app.post('/api/logout', (req, res) => {
-  req.session.destroy();
+  res.clearCookie('auth');
   res.json({ success: true });
 });
 
