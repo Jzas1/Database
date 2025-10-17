@@ -16,11 +16,12 @@ const SHEET_CSV =
 
 // Video mapping - EXACT creative name matches only (no auto-matching)
 // Add your creative names EXACTLY as they appear in your Google Sheet
+// Videos are hosted on Vercel Blob Storage
 const VIDEO_MAP = {
-  "CTV_Ben_DoseStories_10.9_MA": "CTV_DoseStories_Ben.mp4",
-  "CTV_CoffeeUpgrade_10.9_MA": "CTV_coffeeupgrade.mp4",
-  "CTV_Jack_Rudi_10.9_MA": "JACK CTV (RUDI).mov",
-  "CTV_Mike_LetMeGuess_10.9_MA": "CTV_Mike_letmeguess.mov",
+  "CTV_Ben_DoseStories_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/CTV_DoseStories_Ben.mp4",
+  "CTV_CoffeeUpgrade_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/CTV_coffeeupgrade.mp4",
+  "CTV_Jack_Rudi_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/JACK%20CTV%20%28RUDI%29.mov",
+  "CTV_Mike_LetMeGuess_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/CTV_Mike_letmeguess.mov",
 };
 
 // Publisher/Station image mapping - flexible matching
@@ -600,12 +601,12 @@ const colorCell = (value, max, metricKey) => {
                     <div className="flex items-center gap-3">
                       {videoFile && (
                         <div
-                          onClick={() => setVideoUrl(`/videos/${videoFile}`)}
+                          onClick={() => setVideoUrl(videoFile)}
                           className="relative flex-shrink-0 w-20 h-12 rounded-md overflow-hidden cursor-pointer group border border-gray-300 hover:border-blue-400 transition-all"
                           title="Click to play video"
                         >
                           <video
-                            src={`/videos/${videoFile}`}
+                            src={videoFile}
                             className="w-full h-full object-cover"
                             preload="metadata"
                             muted
