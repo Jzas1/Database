@@ -602,17 +602,11 @@ const colorCell = (value, max, metricKey) => {
                       {videoFile && (
                         <div
                           onClick={() => setVideoUrl(videoFile)}
-                          className="relative flex-shrink-0 w-20 h-12 rounded-md overflow-hidden cursor-pointer group border border-gray-300 hover:border-blue-400 transition-all"
+                          className="relative flex-shrink-0 w-20 h-12 rounded-md overflow-hidden cursor-pointer group border border-gray-300 hover:border-blue-400 transition-all bg-gradient-to-br from-purple-100 to-blue-100"
                           title="Click to play video"
                         >
-                          <video
-                            src={videoFile}
-                            className="w-full h-full object-cover"
-                            preload="metadata"
-                            muted
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all">
-                            <div className="w-5 h-5 rounded-full bg-white bg-opacity-80 group-hover:bg-opacity-100 flex items-center justify-center text-gray-800 text-[10px] transition-all shadow-sm">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-white bg-opacity-90 group-hover:bg-opacity-100 flex items-center justify-center text-gray-800 text-sm transition-all shadow-lg">
                               ▶
                             </div>
                           </div>
