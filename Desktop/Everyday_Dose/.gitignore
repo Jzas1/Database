@@ -35,3 +35,5 @@ sheets.json
 # Large video files
 *.mp4
 *.mov
+
+.vercel
