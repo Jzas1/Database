@@ -311,24 +311,62 @@ export default function ConversionDashboard() {
       {/* widened container */}
       <div className="mx-auto max-w-[1600px] space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
-                Everyday Dose
-              </h1>
-              <p className="text-lg text-slate-700">Performance Dashboard</p>
-              <p className="text-xs text-slate-600">
-                Range: {minDate && maxDate ? `${minDate.toLocaleDateString()} — ${maxDate.toLocaleDateString()}` : "loading…"}
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#E9D5FF]">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+            {/* Logo Section */}
+            <div className="flex items-center gap-6">
+              {/* Everyday Dose Logo */}
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center border-2 border-purple-100 shadow-sm p-2">
+                  <img
+                    src="/images/everyday-dose-logo.webp"
+                    alt="Everyday Dose"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+                    Everyday Dose
+                  </h1>
+                  <p className="text-sm text-slate-600">Performance Dashboard</p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden lg:block w-px h-12 bg-gradient-to-b from-transparent via-slate-300 to-transparent"></div>
+
+              {/* Mynt Logo - Horizontal */}
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-12 bg-white rounded-lg flex items-center justify-center border-2 border-slate-100 shadow-sm px-3 py-2">
+                  <img
+                    src="/images/mynt-logo.png"
+                    alt="Mynt"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Powered by</p>
+                  <p className="text-lg font-bold text-slate-800">Mynt</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Date Range Info */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="text-sm text-slate-700 font-medium">
+                {minDate && maxDate ? `${minDate.toLocaleDateString()} — ${maxDate.toLocaleDateString()}` : "loading…"}
               </p>
             </div>
           </div>
 
-          {/* Custom date and multiplier */}
-          <div className="flex items-center gap-4">
-            {/* Multiplier control */}
-            <div className="flex items-center gap-2 border-r border-slate-300 pr-4">
-              <label className="text-xs text-slate-700 font-medium">Conversion Multiplier</label>
+          {/* Filters Row */}
+          <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-4">
+            {/* Advanced Attribution Multiplier control */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl">
+              <label className="text-xs text-slate-600 font-medium whitespace-nowrap">Advanced Attribution Multiplier</label>
               <input
                 type="number"
                 step="0.1"
@@ -336,34 +374,34 @@ export default function ConversionDashboard() {
                 max="10"
                 value={multiplier}
                 onChange={(e) => setMultiplier(parseFloat(e.target.value) || 0)}
-                className="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white shadow-sm w-20"
+                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white shadow-sm w-20 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
               />
             </div>
 
             {/* Date filters */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-700">From</label>
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl">
+              <label className="text-xs text-slate-600 font-medium">From</label>
               <input
                 type="date"
                 value={startDate}
                 min={minDate?.toISOString().slice(0, 10)}
                 max={maxDate?.toISOString().slice(0, 10)}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white shadow-sm"
+                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white shadow-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
               />
-              <label className="text-xs text-slate-700">To</label>
+              <label className="text-xs text-slate-600 font-medium">To</label>
               <input
                 type="date"
                 value={endDate}
                 min={minDate?.toISOString().slice(0, 10)}
                 max={maxDate?.toISOString().slice(0, 10)}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white shadow-sm"
+                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white shadow-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
               />
               {(startDate || endDate) && (
                 <button
                   onClick={() => { setStartDate(""); setEndDate(""); }}
-                  className="px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white shadow-sm hover:bg-slate-50 transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 bg-white shadow-sm hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all"
                 >
                   Clear
                 </button>
@@ -605,11 +643,6 @@ const colorCell = (value, max, metricKey) => {
                           className="relative flex-shrink-0 w-20 h-12 rounded-md overflow-hidden cursor-pointer group border border-gray-300 hover:border-blue-400 transition-all bg-gradient-to-br from-purple-100 to-blue-100"
                           title="Click to play video"
                         >
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-8 h-8 rounded-full bg-white bg-opacity-90 group-hover:bg-opacity-100 flex items-center justify-center text-gray-800 text-sm transition-all shadow-lg">
-                              ▶
-                            </div>
-                          </div>
                         </div>
                       )}
                       {publisherImage && (
