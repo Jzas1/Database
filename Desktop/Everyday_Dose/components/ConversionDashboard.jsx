@@ -209,7 +209,7 @@ export default function ConversionDashboard() {
         const idx = (name) =>
           header.findIndex((h) => h.toLowerCase() === name.toLowerCase());
 
-        const cDay = idx("Day"),
+        const cDay = idx("Date"),
           cPub = idx("Publisher Name"),
           cCr = idx("Creative Name"),
           cImp = idx("Impressions"),
