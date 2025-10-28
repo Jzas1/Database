@@ -58,10 +58,10 @@ function getImageForPublisher(publisherName) {
   return null;
 }
 
-// Softer blue tones for the top chart
+// Chart colors - distinct and matches dashboard theme
 const COLORS = {
-  spend: "#1f77b4", // mid blue
-  impr: "#6baed6",  // light blue
+  spend: "#1f77b4",  // blue for spend
+  impr: "#A78BFA",   // purple for impressions (matches dashboard gradient)
 };
 
 // ---------- helpers ----------
