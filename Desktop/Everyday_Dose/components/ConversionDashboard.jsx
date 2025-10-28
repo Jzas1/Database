@@ -86,10 +86,25 @@ const fmtUsd2 = (n) => {
 function parseMDY(mdy) {
   if (!mdy) return null;
   const s = String(mdy).trim();
-  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (!m) return new Date(s);
-  const [, mm, dd, yyyy] = m;
-  return new Date(`${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`);
+
+  // Try M/D/YYYY or MM/DD/YYYY format (from Google Sheets)
+  const mdyMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (mdyMatch) {
+    const [, mm, dd, yyyy] = mdyMatch;
+    // Create date at noon UTC to avoid timezone issues
+    return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0));
+  }
+
+  // Try YYYY-MM-DD format (from HTML5 date inputs)
+  const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoMatch) {
+    const [, yyyy, mm, dd] = isoMatch;
+    // Create date at noon UTC to avoid timezone issues
+    return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0));
+  }
+
+  // Fallback for other formats
+  return new Date(s);
 }
 
 function parseCSV(text) {
