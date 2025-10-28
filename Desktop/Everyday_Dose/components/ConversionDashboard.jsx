@@ -22,6 +22,7 @@ const VIDEO_MAP = {
   "CTV_CoffeeUpgrade_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/CTV_coffeeupgrade.mp4",
   "CTV_Jack_Rudi_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/JACK%20CTV%20%28RUDI%29.mov",
   "CTV_Mike_LetMeGuess_10.9_MA": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/CTV_Mike_letmeguess.mov",
+  "EVERYDAY DOSE WIDE 30 H264_BEN_1": "https://5fabelv9kxxsxxko.public.blob.vercel-storage.com/videos/EVERYDAY%20DOSE%20WIDE%2030%20H264-compressed.mp4",
 };
 
 // Publisher/Station image mapping - flexible matching
