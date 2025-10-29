@@ -49,7 +49,17 @@ export default async function handler(req, res) {
       return res.json({ data: [] });
     }
 
-    const csv = rows.map(row => row.join(',')).join('\n');
+    // Properly escape CSV values that contain commas, quotes, or newlines
+    function escapeCsvValue(value) {
+      const str = String(value ?? '');
+      // If value contains comma, quote, or newline, wrap in quotes and escape quotes
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }
+
+    const csv = rows.map(row => row.map(escapeCsvValue).join(',')).join('\n');
     res.json({ data: csv });
   } catch (error) {
     console.error('Error fetching sheet data:', error);
