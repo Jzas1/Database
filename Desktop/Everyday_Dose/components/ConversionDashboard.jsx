@@ -486,6 +486,7 @@ export default function ConversionDashboard() {
               metrics={[
                 { k: "spend",       label: "Spend"       },
                 { k: "conversions", label: "Conversions" },
+                { k: "cpc",         label: "Cost Per Sale" },
                 { k: "revenue",     label: "Revenue"     },
                 { k: "roas",        label: "ROAS"        },
                 { k: "impressions", label: "Impressions" },
@@ -505,6 +506,7 @@ export default function ConversionDashboard() {
               metrics={[
                 { k: "spend",       label: "Spend"       },
                 { k: "conversions", label: "Conversions" },
+                { k: "cpc",         label: "Cost Per Sale" },
                 { k: "revenue",     label: "Revenue"     },
                 { k: "roas",        label: "ROAS"        },
                 { k: "impressions", label: "Impressions" },
@@ -687,6 +689,8 @@ const colorCell = (value, max, metricKey) => {
                 // Format based on metric type
                 if (m.k === "spend" || m.k === "revenue") {
                   displayVal = fmtUsd0(val);
+                } else if (m.k === "cpc") {
+                  displayVal = fmtUsd2(val);
                 } else if (m.k === "roas") {
                   displayVal = `${val.toFixed(2)}x`;
                 } else {
