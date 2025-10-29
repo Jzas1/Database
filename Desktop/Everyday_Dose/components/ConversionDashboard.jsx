@@ -129,7 +129,7 @@ const SPEND_SCALE = ["#F5F3FF", "#EDE9FE", "#DDD6FE", "#C4B5FD", "#A78BFA", "#7C
 const CONVERSIONS_SCALE = ["#ECFEFF", "#CFFAFE", "#A5F3FC", "#67E8F9", "#22D3EE", "#06B6D4"];
 const REVENUE_SCALE = ["#F0FDF4", "#DCFCE7", "#A7F3D0", "#6EE7B7", "#34D399", "#059669"];
 const IMPRESSIONS_SCALE = ["#F5F3FF", "#EDE9FE", "#DDD6FE", "#C4B5FD", "#A78BFA", "#7C3AED"];
-const CPC_SCALE = ["#D1FAE5", "#A7F3D0", "#6EE7B7", "#FEF3C7", "#FCA5A5", "#EF4444"]; // Green (low/good) to Red (high/bad)
+const CPC_SCALE = ["#D1FAE5", "#A7F3D0", "#6EE7B7", "#34D399", "#10B981", "#059669"]; // Light green to dark green
 
 // ROAS diverging scale (low → neutral → high)
 const ROAS_LOW = ["#FDE2E7", "#F9A8C7", "#EC4899"];
