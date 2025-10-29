@@ -129,6 +129,7 @@ const SPEND_SCALE = ["#F5F3FF", "#EDE9FE", "#DDD6FE", "#C4B5FD", "#A78BFA", "#7C
 const CONVERSIONS_SCALE = ["#ECFEFF", "#CFFAFE", "#A5F3FC", "#67E8F9", "#22D3EE", "#06B6D4"];
 const REVENUE_SCALE = ["#F0FDF4", "#DCFCE7", "#A7F3D0", "#6EE7B7", "#34D399", "#059669"];
 const IMPRESSIONS_SCALE = ["#F5F3FF", "#EDE9FE", "#DDD6FE", "#C4B5FD", "#A78BFA", "#7C3AED"];
+const CPC_SCALE = ["#D1FAE5", "#A7F3D0", "#6EE7B7", "#FEF3C7", "#FCA5A5", "#EF4444"]; // Green (low/good) to Red (high/bad)
 
 // ROAS diverging scale (low → neutral → high)
 const ROAS_LOW = ["#FDE2E7", "#F9A8C7", "#EC4899"];
@@ -192,7 +193,7 @@ export default function ConversionDashboard() {
   const [rows, setRows] = useState([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [multiplier, setMultiplier] = useState(0.4);
+  const [multiplier, setMultiplier] = useState(1);
 
   // load data
   useEffect(() => {
@@ -486,7 +487,7 @@ export default function ConversionDashboard() {
               metrics={[
                 { k: "spend",       label: "Spend"       },
                 { k: "conversions", label: "Conversions" },
-                { k: "cpc",         label: "Cost Per Sale" },
+                { k: "cpc",         label: "Cost Per Conversion" },
                 { k: "revenue",     label: "Revenue"     },
                 { k: "roas",        label: "ROAS"        },
                 { k: "impressions", label: "Impressions" },
@@ -506,7 +507,7 @@ export default function ConversionDashboard() {
               metrics={[
                 { k: "spend",       label: "Spend"       },
                 { k: "conversions", label: "Conversions" },
-                { k: "cpc",         label: "Cost Per Sale" },
+                { k: "cpc",         label: "Cost Per Conversion" },
                 { k: "revenue",     label: "Revenue"     },
                 { k: "roas",        label: "ROAS"        },
                 { k: "impressions", label: "Impressions" },
@@ -578,7 +579,7 @@ function Heatmap({ rows, rowKey, nameColumnLabel, metrics, extras, showVideos = 
 const colorCell = (value, max, metricKey) => {
   const v = Number(value || 0);
 
-  // Only apply heatmap colors to conversions and revenue
+  // Only apply heatmap colors to conversions, revenue, and cpc
   if (metricKey === "conversions") {
     const cap = Math.max(1, max || 1);
     const p = Math.min(1, v / cap);
@@ -591,6 +592,16 @@ const colorCell = (value, max, metricKey) => {
     const cap = Math.max(1, max || 1);
     const p = Math.min(1, v / cap);
     const bg = interpolateScale(p, REVENUE_SCALE);
+    const textDark = luma(bg) > 0.6;
+    return { backgroundColor: bg, color: textDark ? "#0F172A" : "white" };
+  }
+
+  if (metricKey === "cpc") {
+    // For CPC: LOW is good (green), HIGH is bad (red) - so invert the scale
+    const cap = Math.max(1, max || 1);
+    const p = Math.min(1, v / cap);
+    const invertedP = 1 - p; // Invert so low CPC gets high score (green)
+    const bg = interpolateScale(invertedP, CPC_SCALE);
     const textDark = luma(bg) > 0.6;
     return { backgroundColor: bg, color: textDark ? "#0F172A" : "white" };
   }
