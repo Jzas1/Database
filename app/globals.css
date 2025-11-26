@@ -1,0 +1,166 @@
+/* =========================================================
+   Global styles for the dashboard (Tailwind + a little custom)
+   ========================================================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------- Brand tokens - Quicksilver Scientific -------- */
+:root {
+  /* force light mode so OS/extension dark themes don't flip colors */
+  color-scheme: light;
+
+  --brand-navy: #0B2A3C;     /* Quicksilver deep navy */
+  --brand-accent: #C49A49;   /* Gold/brass accent */
+  --brand-gold: #C49A49;     /* Gold/brass */
+  --amber-brown: #8A5A30;    /* Amber brown */
+  --ivory: #F7F5F0;          /* Off-white/ivory */
+  --ink: #0f172a;            /* slate-900 */
+  --muted: #6E767D;          /* slate */
+  --panel: #ffffff;
+  --ring: rgba(11, 42, 60, 0.15);
+  --shadow: 0 6px 18px rgba(11, 42, 60, 0.08);
+}
+
+/* -------- Page background + base text -------- */
+html, body, #root {
+  min-height: 100%;
+  background: #FAFAF7;  /* Quicksilver main background */
+  color: var(--ink);
+}
+
+/* Let the app breathe a bit on very large screens */
+@media (min-width: 1536px) {
+  .container-xl {
+    max-width: 1400px;
+    margin-inline: auto;
+  }
+}
+
+/* -------- Typography polish -------- */
+h1, h2, h3 {
+  letter-spacing: -0.01em;
+}
+h1 { color: var(--ink); }
+.subtle {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* -------- Cards / panels -------- */
+.card {
+  background: var(--panel);
+  border: 1px solid rgba(2, 8, 23, 0.05);
+  border-radius: 1rem;            /* 2xl vibe */
+  box-shadow: var(--shadow);
+}
+
+/* KPI layout tweaks (optional if you're using Tailwind classes already) */
+.kpi .label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.kpi .value {
+  font-weight: 700;
+  font-size: clamp(1.6rem, 3.2vw, 2rem);
+  color: var(--ink);
+}
+
+/* -------- Inputs / selects / buttons -------- */
+input[type="date"],
+select,
+button {
+  border-radius: 0.8rem;
+  border: 1px solid rgba(2, 8, 23, 0.08);
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(2, 8, 23, 0.02);
+}
+
+input[type="date"]:focus,
+select:focus,
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--ring);
+  border-color: rgba(14, 42, 82, 0.35);
+}
+
+/* Clear button hover */
+button:hover {
+  filter: brightness(0.98);
+}
+
+/* -------- Tables / heatmap pills -------- */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px; /* row breathing room */
+}
+
+th {
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: none;
+}
+
+td {
+  color: var(--ink);
+}
+
+.heat-pill {
+  display: inline-block;
+  min-width: 3.2rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 1px 0 rgba(2, 8, 23, 0.03), 0 2px 8px rgba(2, 8, 23, 0.04);
+}
+
+/* -------- Recharts polish -------- */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(2, 8, 23, 0.08);
+}
+
+.recharts-default-tooltip {
+  background: #ffffff !important;
+  border: 1px solid rgba(2, 8, 23, 0.08) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: var(--shadow) !important;
+  padding: 0.5rem 0.75rem !important;
+  color: var(--ink) !important;
+}
+
+/* Make the area gradients feel brandy */
+.stroke-spend { stroke: var(--brand-navy); }
+.fill-spend   { fill:   color-mix(in oklab, var(--brand-navy) 18%, transparent); }
+
+.stroke-impr  { stroke: var(--brand-accent); }
+.fill-impr    { fill:   color-mix(in oklab, var(--brand-accent) 18%, transparent); }
+
+/* -------- Logo niceties -------- */
+.brand-logo {
+  height: 2.25rem;   /* ~h-9 */
+  width: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* -------- Nice scrollbars (Chromium/Edge) -------- */
+:root::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+:root::-webkit-scrollbar-thumb {
+  background: rgba(2, 8, 23, 0.18);
+  border-radius: 999px;
+}
+:root::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* -------- Utility helpers you can use in JSX -------- */
+.shadow-soft { box-shadow: var(--shadow); }
+.border-soft { border: 1px solid rgba(2, 8, 23, 0.06); }
+.text-mynt   { color: var(--brand-navy); }
+.bg-panel    { background: var(--panel); }
