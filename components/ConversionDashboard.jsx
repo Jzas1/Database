@@ -214,6 +214,7 @@ export default function ConversionDashboard() {
     modules: [
       { id: 'kpis', name: 'KPI Cards', visible: true },
       { id: 'notes', name: 'Key Insights', visible: true, notes: [] },
+      { id: 'image', name: 'Image Card', visible: true, imageUrl: '', imageData: null, imageSize: 100, imageCaption: '' },
       { id: 'dailyChart', name: 'Daily Spend & Impressions', visible: true },
       { id: 'channelHeatmap', name: 'Channel Heatmap', visible: true, heatmapEnabled: true, enabledMetrics: DEFAULT_METRICS },
       { id: 'creativeHeatmap', name: 'Creative Heatmap', visible: true, heatmapEnabled: true, enabledMetrics: DEFAULT_METRICS },
@@ -316,7 +317,7 @@ export default function ConversionDashboard() {
   const [allRows, setAllRows] = useState([]);
   const [isLoadingBackground, setIsLoadingBackground] = useState(false);
 
-  // Initial load: Fetch just the most recent broadcast week FAST, then load all in background
+  // Initial load: Fetch ALL pre-aggregated data from fast endpoint
   useEffect(() => {
     (async () => {
       try {
@@ -324,70 +325,147 @@ export default function ConversionDashboard() {
         setIsLoading(true);
         setApiError(null);
 
-        // Step 1: Get date range (FAST - 1-2 seconds)
-        const dateRangeResponse = await fetch(`http://localhost:8000/api/data/date-range?client_name=Quicksilver Scientific`, { cache: "no-store" });
-        if (!dateRangeResponse.ok) throw new Error(`API ${dateRangeResponse.status}`);
-        const dateRangeJson = await dateRangeResponse.json();
+        // Use the FAST pre-aggregated endpoint - returns all dashboard data in one call
+        // Call Cloud Run backend (production API)
+        const API_BASE = "https://mynt-dashboard-api-650833336975.us-central1.run.app";
+        console.log("[Dashboard v2.1.0 - Nov 26 2025 9:45pm] Fetching from Cloud Run API...");
+        const response = await fetch(`${API_BASE}/api/dashboard/fast/Quicksilver%20Scientific`, { cache: "no-store" });
 
-        if (!dateRangeJson.latest_date) {
+        if (!response.ok) throw new Error(`API ${response.status}`);
+        const json = await response.json();
+
+        console.log(`Dashboard data loaded in ${json.query_time_seconds}s from pre-aggregated views`);
+        console.log("Views used:", json.views_used);
+
+        const data = json.data;
+
+        if (!data || !data.kpis) {
           setDashboardData(null);
           return;
         }
 
-        // Parse latest date as local date (avoid timezone issues)
-        const [year, month, day] = dateRangeJson.latest_date.split('-').map(Number);
-        const latestDate = new Date(year, month - 1, day);
-        const dayOfWeek = latestDate.getDay();
+        // Transform the pre-aggregated data to match dashboard expectations
+        const dashboardData = {
+          kpis: {
+            total_spend: data.kpis.total_spend || 0,
+            total_impressions: data.kpis.total_impressions || 0,
+            total_conversions: data.kpis.total_conversions || 0,
+            total_revenue: data.kpis.total_revenue || 0,
+            total_responses: data.kpis.total_responses || 0,
+            earliest_date: data.kpis.earliest_date,
+            latest_date: data.kpis.latest_date,
+          },
+          byChannel: (data.byChannel || []).map(c => ({
+            Station: c.Station,
+            spend: c.spend || 0,
+            impressions: c.impressions || 0,
+            conversions: c.conversions || 0,
+            revenue: c.revenue || 0,
+            responses: c.responses || 0,
+            spot_count: c.spot_count || 0,
+          })),
+          byCreative: (data.byCreative || []).map(c => ({
+            Creative: c.Creative,
+            spend: c.spend || 0,
+            impressions: c.impressions || 0,
+            conversions: c.conversions || 0,
+            revenue: c.revenue || 0,
+            responses: c.responses || 0,
+            spot_count: c.spot_count || 0,
+          })),
+          byDaypart: (data.byDaypart || []).map(d => ({
+            Daypart: d.Daypart,
+            spend: d.spend || 0,
+            impressions: d.impressions || 0,
+            conversions: d.conversions || 0,
+            revenue: d.revenue || 0,
+            responses: d.responses || 0,
+            spot_count: d.spot_count || 0,
+          })),
+          byDayOfWeek: data.byDayOfWeek ? data.byDayOfWeek.map(d => ({
+            day_name: d.day_name,
+            day_order: d.day_order,
+            spend: d.spend || 0,
+            impressions: d.impressions || 0,
+            conversions: d.conversions || 0,
+            revenue: d.revenue || 0,
+            responses: d.responses || 0,
+            spot_count: d.spot_count || 0,
+          })) : (() => {
+            // Compute byDayOfWeek from daily data if not provided by API
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const dowTotals = {};
+            (data.daily || []).forEach(d => {
+              if (!d.Date) return;
+              const dateObj = new Date(d.Date + 'T00:00:00');
+              const dayIdx = dateObj.getDay();
+              const dayName = dayNames[dayIdx];
+              if (!dowTotals[dayName]) {
+                dowTotals[dayName] = { day_name: dayName, day_order: dayIdx, spend: 0, impressions: 0, conversions: 0, revenue: 0, responses: 0, spot_count: 0 };
+              }
+              dowTotals[dayName].spend += d.spend || 0;
+              dowTotals[dayName].impressions += d.impressions || 0;
+              dowTotals[dayName].conversions += d.conversions || 0;
+              dowTotals[dayName].revenue += d.revenue || 0;
+              dowTotals[dayName].responses += d.responses || 0;
+              dowTotals[dayName].spot_count += d.spot_count || 0;
+            });
+            return Object.values(dowTotals).sort((a, b) => a.day_order - b.day_order);
+          })(),
+          channelByDaypart: (data.channelByDaypart || []).map(d => ({
+            Station: d.Station,
+            Daypart: d.Daypart,
+            spend: d.spend || 0,
+            impressions: d.impressions || 0,
+            conversions: d.conversions || 0,
+            revenue: d.revenue || 0,
+            responses: d.responses || 0,
+            spot_count: d.spot_count || 0,
+          })),
+          channelByCreative: (data.channelByCreative || []).map(d => ({
+            Station: d.Station,
+            Creative: d.Creative,
+            spend: d.spend || 0,
+            impressions: d.impressions || 0,
+            conversions: d.conversions || 0,
+            revenue: d.revenue || 0,
+            responses: d.responses || 0,
+            spot_count: d.spot_count || 0,
+          })),
+          daily: (data.daily || []).map(d => ({
+            Date: d.Date,
+            spend: d.spend || 0,
+            impressions: d.impressions || 0,
+            conversions: d.conversions || 0,
+            revenue: d.revenue || 0,
+            responses: d.responses || 0,
+            spot_count: d.spot_count || 0,
+          })),
+        };
 
-        // Broadcast week = Monday to Sunday
-        let weekEndDate = new Date(latestDate);
-        if (dayOfWeek !== 0) {
-          weekEndDate.setDate(latestDate.getDate() - dayOfWeek);
+        setDashboardData(dashboardData);
+
+        // Set date range from KPIs for the date picker
+        if (data.kpis.earliest_date && data.kpis.latest_date) {
+          // Default to showing ALL data (full date range)
+          setStartDate(data.kpis.earliest_date);
+          setEndDate(data.kpis.latest_date);
         }
-        const weekStartDate = new Date(weekEndDate);
-        weekStartDate.setDate(weekEndDate.getDate() - 6);
 
-        const pad = (n) => String(n).padStart(2, '0');
-        const weekStart = `${weekStartDate.getFullYear()}-${pad(weekStartDate.getMonth() + 1)}-${pad(weekStartDate.getDate())}`;
-        const weekEnd = `${weekEndDate.getFullYear()}-${pad(weekEndDate.getMonth() + 1)}-${pad(weekEndDate.getDate())}`;
-
-        console.log(`Broadcast week: ${weekStart} to ${weekEnd}`);
-
-        // Step 2: Fetch JUST that week's data (FAST)
-        const weekResponse = await fetch(`http://localhost:8000/api/data/daily?client_name=Quicksilver Scientific&start_date=${weekStart}&end_date=${weekEnd}`, { cache: "no-store" });
-        if (!weekResponse.ok) throw new Error(`API ${weekResponse.status}`);
-        const weekJson = await weekResponse.json();
-        const weekRows = weekJson.rows || [];
-
-        if (!weekRows.length) {
-          setDashboardData(null);
-          return;
-        }
-
-        // Aggregate and display the most recent week immediately
-        const weekData = aggregateRows(weekRows, dateRangeJson.earliest_date, dateRangeJson.latest_date);
-        setDashboardData(weekData);
-        setAllRows(weekRows);
-        setStartDate(weekStart);
-        setEndDate(weekEnd);
-
-        // Step 3: Load ALL data in the background for date filtering
-        setIsLoadingBackground(true);
-        setTimeout(async () => {
-          try {
-            const allDataResponse = await fetch(`http://localhost:8000/api/data/daily?client_name=Quicksilver Scientific`, { cache: "no-store" });
-            if (allDataResponse.ok) {
-              const allDataJson = await allDataResponse.json();
-              const allDataRows = allDataJson.rows || [];
-              setAllRows(allDataRows);
-              console.log(`Background load complete: ${allDataRows.length} rows loaded`);
-            }
-          } catch (e) {
-            console.error("Background data load failed:", e);
-          } finally {
-            setIsLoadingBackground(false);
-          }
-        }, 100);
+        // Also store raw rows for date filtering (from daily data)
+        // Convert daily pre-aggregated data to row format for filtering
+        const dailyRows = (data.daily || []).map(d => ({
+          Date: d.Date,
+          Cost: d.spend,
+          Impressions: d.impressions,
+          sale: d.conversions,
+          Action_Revenue: d.revenue,
+          Responses: d.responses,
+          Station: "All", // Daily totals don't have breakdowns
+          Creative: "All",
+          Daypart: "All",
+        }));
+        setAllRows(dailyRows);
 
       } catch (e) {
         console.error("Initial data load failed:", e);
@@ -399,22 +477,49 @@ export default function ConversionDashboard() {
     })();
   }, []);
 
-  // When user changes dates, filter from allRows and re-aggregate
+  // When user changes dates, re-fetch from API with date filter
+  // Note: Pre-aggregated views support date filtering on daily chart only
+  // For heatmaps, we show all-time totals (pre-aggregated for speed)
   useEffect(() => {
-    if (!startDate || !endDate || !allRows.length || isLoadingBackground) return;
+    // Skip if this is the initial load (handled by the other useEffect)
+    if (!startDate || !endDate) return;
 
-    const filtered = allRows.filter((r) => {
-      const d = parseMDY(r.Date);
-      const s = parseMDY(startDate);
-      const e = parseMDY(endDate);
-      return d >= s && d <= e;
-    });
+    // Re-fetch with date filter for the daily chart
+    (async () => {
+      try {
+        const API_BASE = "https://mynt-dashboard-api-650833336975.us-central1.run.app";
+        console.log(`Re-fetching with date filter: ${startDate} to ${endDate}`);
+        const response = await fetch(
+          `${API_BASE}/api/dashboard/fast/Quicksilver%20Scientific?start_date=${startDate}&end_date=${endDate}`,
+          { cache: "no-store" }
+        );
 
-    if (filtered.length > 0) {
-      const data = aggregateRows(filtered, startDate, endDate);
-      setDashboardData(data);
-    }
-  }, [startDate, endDate, allRows, isLoadingBackground]);
+        if (!response.ok) return;
+        const json = await response.json();
+        const data = json.data;
+
+        if (!data) return;
+
+        // Update daily chart data with filtered results
+        // Keep heatmap data as-is (all-time totals from pre-aggregated views)
+        setDashboardData(prev => ({
+          ...prev,
+          daily: (data.daily || []).map(d => ({
+            Date: d.Date,
+            spend: d.spend || 0,
+            impressions: d.impressions || 0,
+            conversions: d.conversions || 0,
+            revenue: d.revenue || 0,
+            responses: d.responses || 0,
+            spot_count: d.spot_count || 0,
+          })),
+        }));
+
+      } catch (e) {
+        console.error("Date filter fetch failed:", e);
+      }
+    })();
+  }, [startDate, endDate]);
 
   // Helper function to aggregate raw rows into dashboard data format
   const aggregateRows = (rows, earliestDate, latestDate) => {
@@ -875,6 +980,23 @@ export default function ConversionDashboard() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              );
+
+            case 'image':
+              if (!module.imageUrl && !module.imageData) return null;
+              const imgSrc = module.imageUrl || module.imageData;
+              return (
+                <div key={module.id} className="bg-white rounded-2xl shadow-sm p-5 border border-[#E9D5FF]">
+                  <img
+                    src={imgSrc}
+                    alt={module.imageCaption || "Dashboard Image"}
+                    className="w-full h-auto rounded-lg"
+                    style={{ maxWidth: `${module.imageSize || 100}%` }}
+                  />
+                  {module.imageCaption && (
+                    <p className="text-sm text-gray-500 mt-2 text-center">{module.imageCaption}</p>
+                  )}
                 </div>
               );
 

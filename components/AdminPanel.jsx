@@ -151,7 +151,16 @@ export default function AdminPanel({ layout, onLayoutChange, onSave, isSaving })
   const heatmapModules = ['channelHeatmap', 'creativeHeatmap', 'daypartHeatmap', 'dayOfWeekHeatmap', 'channelByDaypart', 'channelByCreative'];
 
   // Modules that have special config panels
-  const configModules = ['kpis', 'dailyChart', 'notes', ...heatmapModules];
+  const configModules = ['kpis', 'dailyChart', 'notes', 'image', ...heatmapModules];
+
+  // Handle image URL change
+  const handleImageUrlChange = (url) => {
+    const newModules = layout.modules.map((m) => {
+      if (m.id !== 'image') return m;
+      return { ...m, imageUrl: url };
+    });
+    onLayoutChange({ ...layout, modules: newModules });
+  };
 
   // State for new note input
   const [newNote, setNewNote] = useState('');
@@ -292,11 +301,10 @@ export default function AdminPanel({ layout, onLayoutChange, onSave, isSaving })
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1 hover:bg-white/10 rounded"
+              className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded"
+              style={{ color: 'white', fontSize: '24px', lineHeight: '1', background: 'transparent', border: 'none', boxShadow: 'none' }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✕
             </button>
           </div>
           <p className="text-sm text-gray-300 mt-1">Configure modules & metrics</p>
@@ -497,6 +505,105 @@ export default function AdminPanel({ layout, onLayoutChange, onSave, isSaving })
                       {(!module.notes || module.notes.length === 0) && (
                         <p className="text-xs text-gray-400 text-center py-4">No notes yet. Add your first insight above.</p>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Expanded Config Panel for Image Card */}
+                {expandedModule === module.id && module.id === 'image' && (
+                  <div className="ml-8 mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-2">Paste Screenshot or Drop Image</p>
+
+                    {/* Drop zone / paste area */}
+                    <div
+                      className="w-full min-h-[100px] border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#C49A49] hover:bg-gray-50 transition-all"
+                      onPaste={(e) => {
+                        const items = e.clipboardData?.items;
+                        if (items) {
+                          for (let i = 0; i < items.length; i++) {
+                            if (items[i].type.indexOf('image') !== -1) {
+                              const file = items[i].getAsFile();
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const newModules = layout.modules.map((m) => {
+                                  if (m.id !== 'image') return m;
+                                  return { ...m, imageData: event.target.result };
+                                });
+                                onLayoutChange({ ...layout, modules: newModules });
+                              };
+                              reader.readAsDataURL(file);
+                              break;
+                            }
+                          }
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files[0];
+                        if (file && file.type.startsWith('image/')) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const newModules = layout.modules.map((m) => {
+                              if (m.id !== 'image') return m;
+                              return { ...m, imageData: event.target.result };
+                            });
+                            onLayoutChange({ ...layout, modules: newModules });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      tabIndex={0}
+                    >
+                      {module.imageData ? (
+                        <img
+                          src={module.imageData}
+                          alt="Preview"
+                          className="max-w-full max-h-40 mx-auto rounded border border-gray-200"
+                        />
+                      ) : (
+                        <div className="text-gray-400">
+                          <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm">Click here and paste (Ctrl+V)</p>
+                          <p className="text-xs mt-1">or drag & drop an image</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Clear button */}
+                    {module.imageData && (
+                      <button
+                        onClick={() => {
+                          const newModules = layout.modules.map((m) => {
+                            if (m.id !== 'image') return m;
+                            return { ...m, imageData: null };
+                          });
+                          onLayoutChange({ ...layout, modules: newModules });
+                        }}
+                        className="mt-2 text-xs text-red-500 hover:text-red-700"
+                      >
+                        Remove Image
+                      </button>
+                    )}
+
+                    {/* Caption input */}
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-500 mb-1">Caption (optional)</p>
+                      <input
+                        type="text"
+                        value={module.imageCaption || ''}
+                        onChange={(e) => {
+                          const newModules = layout.modules.map((m) => {
+                            if (m.id !== 'image') return m;
+                            return { ...m, imageCaption: e.target.value };
+                          });
+                          onLayoutChange({ ...layout, modules: newModules });
+                        }}
+                        placeholder="Add a caption..."
+                        className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C49A49] focus:border-[#C49A49] outline-none"
+                      />
                     </div>
                   </div>
                 )}
